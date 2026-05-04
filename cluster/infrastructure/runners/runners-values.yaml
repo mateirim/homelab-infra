@@ -52,7 +52,7 @@ dockerRegistryMirror: ""
 image:
   repository: "summerwind/actions-runner-controller"
   # IMPORTANT: actionsRunnerRepositoryAndTag is your *custom* runner image.
-  # You must build and push it to your private registry (see homelab-helm-charts/containers/).
+  # You must build and push it to your private registry (see helm-charts/containers/).
   # Replace 'latest' with a specific tag (e.g., '2024.11.01') to ensure reproducible deployments.
   # Example: registry.REPLACE_WITH_YOUR_DOMAIN/actions-runner:2024.11.01
   actionsRunnerRepositoryAndTag: "registry.REPLACE_WITH_YOUR_DOMAIN/actions-runner:latest"

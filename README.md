@@ -34,7 +34,7 @@ A **comprehensive multi-arch homelab GitOps repository**: featuring 3-stage kube
 | [cluster/docs/](cluster/docs/) | Architecture diagrams and reference docs |
 | **📁 Main Directories** | |
 | [cluster/](cluster/) | Kubernetes manifests, config, stages 1-3 |
-| [homelab-helm-charts/](homelab-helm-charts/) | Custom Helm charts and Dockerfiles |
+| [helm-charts/](helm-charts/) | Custom Helm charts and Dockerfiles |
 | [jenkins-repo/](jenkins-repo/) | Jenkins pipelines and shared libraries |
 | [puppet-control-repo/](puppet-control-repo/) | Puppet roles, profiles, and Hiera data |
 | **🚀 Quick Links** | |
@@ -161,7 +161,7 @@ homelab-infra/
 │   │   ├── stage-2/          # Infrastructure: databases, certs, proxy, pihole, registry, wireguard
 │   │   └── stage-3/          # Applications: nextcloud, jenkins, keycloak, llm, grafana, etc
 │   └── docs/                 # Architecture diagrams and reference documentation
-├── homelab-helm-charts/      # Custom Helm charts and Dockerfiles
+├── helm-charts/      # Custom Helm charts and Dockerfiles
 │   ├── charts/               # Custom Helm charts (Foreman example)
 │   └── containers/           # Dockerfiles: puppetserver, actions-runner, foreman, homelab-operator, promtail-syslog, r10k
 ├── jenkins-repo/             # Jenkins shared libs (Groovy) and CI/CD pipelines
@@ -230,7 +230,7 @@ Docker images built multi-arch (amd64 + arm64) via buildx automatically.
 **Core Directories:**
 
 - [cluster/](cluster/) — Kubernetes manifests, stages, config
-- [homelab-helm-charts/](homelab-helm-charts/) — Custom Helm charts and container images
+- [helm-charts/](helm-charts/) — Custom Helm charts and container images
 - [jenkins-repo/](jenkins-repo/) — Jenkins pipelines and shared libraries
 - [puppet-control-repo/](puppet-control-repo/) — Puppet configuration management
 

@@ -14,13 +14,13 @@ Kubernetes cluster definition managed by ArgoCD.
 
 All Helm charts (external + custom) are documented in **[docs/HELM-CHARTS.md](docs/HELM-CHARTS.md)**. This guide lists:
 - External chart repositories and URLs
-- Custom charts in `homelab-helm-charts/charts/`
+- Custom charts in `helm-charts/charts/`
 - How to add new charts to the cluster
 
 ## Setup Order
 
 1. Run `./setup.sh` from repo root
-2. Install containerd (see homelab-helm-charts/commands/containerd/README.md)
+2. Install containerd (see helm-charts/commands/containerd/README.md)
 3. Bootstrap control plane: `kubeadm init --config cluster/config/kubeadm-init-2026.yaml`
 4. Join workers: `kubeadm join ...`
 5. Install CNI: `helm install cilium cilium/cilium -n kube-system -f cluster/infrastructure/cni/cilium-values.yaml`

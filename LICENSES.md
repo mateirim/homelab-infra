@@ -127,7 +127,7 @@ Some components (e.g., Grafana Enterprise features, n8n cloud) have commercial o
 
 ## Container Images
 
-All Dockerfiles in `homelab-helm-charts/containers/` are based on publicly available base images:
+All Dockerfiles in `helm-charts/containers/` are based on publicly available base images:
 - Alpine Linux (Apache 2.0 / MIT)
 - Ubuntu (Canonical)
 - Official Docker Images

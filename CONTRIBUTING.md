@@ -59,7 +59,7 @@ cluster/
 ├── config/             # kubeadm config, kernel settings
 └── docs/               # Architecture docs, ADRs, runbooks
 
-homelab-helm-charts/
+helm-charts/
 ├── charts/             # Custom Helm charts (foreman, etc.)
 ├── containers/         # Custom Dockerfiles (puppetserver, r10k, etc.)
 

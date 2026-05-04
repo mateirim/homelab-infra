@@ -4,7 +4,7 @@ This document lists all **external** Helm charts deployed in the homelab-infra c
 
 **License & Attribution:** See [LICENSES.md](../../LICENSES.md) for full license information and attribution for all third-party projects.
 
-For **custom/local** charts, see [homelab-helm-charts/charts/](../../homelab-helm-charts/charts/).
+For **custom/local** charts, see [helm-charts/charts/](../../helm-charts/charts/).
 
 ## External Chart Repositories
 
@@ -140,10 +140,10 @@ For **custom/local** charts, see [homelab-helm-charts/charts/](../../homelab-hel
 
 ## Custom/Local Charts
 
-Custom charts are maintained in [`homelab-helm-charts/charts/`](../../homelab-helm-charts/charts/). These are built and deployed from this repository:
+Custom charts are maintained in [`helm-charts/charts/`](../../helm-charts/charts/). These are built and deployed from this repository:
 
 - **foreman** — Puppet reporting + analytics
-  - Location: [homelab-helm-charts/charts/foreman/](../../homelab-helm-charts/charts/foreman/)
+  - Location: [helm-charts/charts/foreman/](../../helm-charts/charts/foreman/)
   - Based on [Foreman](https://github.com/theforeman/foreman) (GPL 3.0)
   - Docker image: [lu1as/docker-foreman](https://github.com/lu1as/docker-foreman)
   - License: GPL 3.0 (See [LICENSES.md](../../LICENSES.md) for compliance details)
@@ -184,12 +184,12 @@ To add a new **external** chart:
 
 To create a **custom** chart:
 
-1. Create directory: `homelab-helm-charts/charts/<chart-name>/`
+1. Create directory: `helm-charts/charts/<chart-name>/`
 2. Follow standard Helm chart structure (`Chart.yaml`, `values.yaml`, `templates/`)
 3. Include `LICENSE` file in the chart directory
 4. Reference it in the appropriate namespace's `service.yaml` with `repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra`
 5. Update [LICENSES.md](../../LICENSES.md) with the chart details
-6. See [foreman chart](../../homelab-helm-charts/charts/foreman/) for an example
+6. See [foreman chart](../../helm-charts/charts/foreman/) for an example
 
 ---
 
@@ -208,6 +208,6 @@ For complete details, see [LICENSES.md](../../LICENSES.md).
 
 - **Private Registries**: OCI-based charts (like `litellm` and `n8n`) may require authentication
 - **Version Pinning**: Always use caret (`^`) or tilde (`~`) versioning for stability
-- **Custom Charts**: Charts in `homelab-helm-charts/charts/` are deployed from the git repo itself
+- **Custom Charts**: Charts in `helm-charts/charts/` are deployed from the git repo itself
 - **Chart Updates**: Keep chart repos updated with `helm repo update`
 - **License Compliance**: Review [LICENSES.md](../../LICENSES.md) before commercial deployment

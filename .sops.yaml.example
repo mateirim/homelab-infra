@@ -5,5 +5,5 @@ creation_rules:
     pgp: YOUR_GPG_KEY_FINGERPRINT_HERE
   - path_regex: puppet-control-repo/.*
     pgp: YOUR_GPG_KEY_FINGERPRINT_HERE
-  - path_regex: homelab-helm-charts/.*
+  - path_regex: helm-charts/.*
     pgp: YOUR_GPG_KEY_FINGERPRINT_HERE
