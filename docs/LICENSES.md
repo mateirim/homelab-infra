@@ -16,7 +16,10 @@ The following open-source projects are used:
 |---------|---------|--------|-----------|
 | **Cilium** | Apache 2.0 | [github.com/cilium/cilium](https://github.com/cilium/cilium) | https://helm.cilium.io/ |
 | **NGINX Ingress Controller** | Apache 2.0 | [github.com/kubernetes/ingress-nginx](https://github.com/kubernetes/ingress-nginx) | https://kubernetes.github.io/ingress-nginx |
-| **Tailscale** | BSD | [github.com/tailscale/tailscale-helm](https://github.com/tailscale/tailscale-helm) | https://pkgs.tailscale.com/tailscale-helm/ |
+| **Tailscale** | BSD | [github.com/tailscale/tailscale-helm](https://github.com/tailscale/tailscale-helm) | https://pkgs.tailscale.com/helmcharts |
+| **External DNS** | Apache 2.0 | [github.com/kubernetes-sigs/external-dns](https://github.com/kubernetes-sigs/external-dns) | https://kubernetes-sigs.github.io/external-dns/ |
+| **Inadyn DDNS** | MIT | [github.com/philippwaller/helm-charts](https://github.com/philippwaller/helm-charts) | https://charts.philippwaller.com |
+| **Pi-hole** | MIT | [github.com/mojo2600/pihole-kubernetes](https://github.com/mojo2600/pihole-kubernetes) | https://mojo2600.github.io/pihole-kubernetes |
 
 ### Security & Certificates
 
@@ -30,6 +33,9 @@ The following open-source projects are used:
 | Project | License | Source | Helm Repo |
 |---------|---------|--------|-----------|
 | **Redis HA** | BSD | [github.com/bitnami/charts](https://github.com/bitnami/charts) | https://charts.bitnami.com/bitnami |
+| **PostgreSQL** | Apache 2.0 | [github.com/bitnami/charts](https://github.com/bitnami/charts) | https://charts.bitnami.com/bitnami |
+| **MongoDB** | Apache 2.0 | [github.com/mongodb/helm-charts](https://github.com/mongodb/helm-charts) | https://mongodb.github.io/helm-charts |
+| **NFS Provisioner** | Apache 2.0 | [github.com/kubernetes-sigs/nfs-subdir-external-provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) | https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner |
 
 ### Monitoring & Observability
 
@@ -53,6 +59,9 @@ The following open-source projects are used:
 | **n8n** | Elastic 2.0 | [github.com/n8n-io/n8n](https://github.com/n8n-io/n8n) | oci://8gears.container-registry.com/library/n8n |
 | **LiteLLM** | MIT | [github.com/BerriAI/litellm](https://github.com/BerriAI/litellm) | oci://docker.litellm.ai/berriai/litellm-helm |
 | **OpenClaw** | MIT | [github.com/serhanekicii/openclaw](https://github.com/serhanekicii/openclaw) | https://serhanekicii.github.io/openclaw-helm |
+| **Nextcloud** | AGPL 3.0 | [github.com/nextcloud/helm](https://github.com/nextcloud/helm) | https://nextcloud.github.io/helm/ |
+| **PhotoPrism** | AGPL 3.0 | [github.com/photoprism/photoprism](https://github.com/photoprism/photoprism) | https://charts.photoprism.app/photoprism |
+| **PostgreSQL UI (Joxit)** | MIT | [github.com/joxit/docker-docker-registry-ui](https://github.com/joxit/docker-docker-registry-ui) | https://helm.joxit.dev |
 
 ### Home Automation
 
@@ -73,6 +82,7 @@ The following open-source projects are used:
 | Project | License | Source | Helm Repo |
 |---------|---------|--------|-----------|
 | **KEDA** | Apache 2.0 | [github.com/kedacore/keda](https://github.com/kedacore/keda) | https://kedacore.github.io/charts |
+| **Actions Runner Controller** | Apache 2.0 | [github.com/actions/actions-runner-controller](https://github.com/actions/actions-runner-controller) | https://actions-runner-controller.github.io/actions-runner-controller |
 
 ### GPU Support
 
