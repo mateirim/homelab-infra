@@ -1,0 +1,32 @@
+# SOPS key config — contains your GPG fingerprint, never commit
+.sops.yaml
+
+# Local secrets / keys
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Editor/OS
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+*.iml
+
+# Local setup output
+*.log
+/tmp/
+
+# kubeconfig
+kubeconfig
+*.kubeconfig
+admin.conf

@@ -12,8 +12,8 @@ This pipeline uses **username/password** authentication instead of SSH keys.
 4. Fill in:
    - **Kind**: Username with password
    - **Scope**: Global
-   - **Username**: `homelab`
-   - **Password**: `homelab`
+   - **Username**: `YOUR_DEPLOY_USER`
+   - **Password**: `YOUR_DEPLOY_PASSWORD`
    - **ID**: `deploy-ssh-creds`
    - **Description**: SSH credentials for YOUR_NODE.homelab.local
 5. Click **Create**
@@ -53,7 +53,7 @@ brew install hudochenkov/sshpass/sshpass
 1. Click **Build with Parameters** (or **Build Now**)
 2. Parameters:
    - **SERVER**: `YOUR_NODE.homelab.local` (default)
-   - **REMOTE_USER**: `homelab` (default)
+   - **REMOTE_USER**: `YOUR_DEPLOY_USER` (default)
 3. Click **Build**
 
 ## What the Pipeline Does
@@ -104,13 +104,13 @@ For production, use SSH key authentication instead:
 
 2. Copy public key to server:
    ```bash
-   ssh-copy-id -i ~/.ssh/jenkins_deploy_key.pub admin@homelab.local
+   ssh-copy-id -i ~/.ssh/jenkins_deploy_key.pub YOUR_DEPLOY_USER@YOUR_NODE.homelab.local
    ```
 
 3. Add private key to Jenkins credentials:
    - Kind: SSH Username with private key
    - ID: `YOUR_NODE-ssh-key`
-   - Username: `homelab`
+   - Username: `YOUR_DEPLOY_USER`
    - Private Key: [paste content of jenkins_deploy_key]
 
 4. Use `sshagent` in pipeline (see `ssh-deployment-yaml.yaml`)
@@ -121,11 +121,11 @@ Test SSH connection from Jenkins agent:
 
 ```bash
 # With sshpass
-sshpass -p 'homelab' ssh -o StrictHostKeyChecking=no admin@homelab.local "echo 'Connection successful'"
+sshpass -p 'YOUR_DEPLOY_PASSWORD' ssh -o StrictHostKeyChecking=no YOUR_DEPLOY_USER@YOUR_NODE.homelab.local "echo 'Connection successful'"
 
 # Manual test
-ssh admin@homelab.local
-# Enter password: homelab
+ssh YOUR_DEPLOY_USER@YOUR_NODE.homelab.local
+# Enter password: YOUR_DEPLOY_PASSWORD
 ```
 
 ## Troubleshooting
@@ -137,7 +137,7 @@ ssh admin@homelab.local
 **Solution**: 
 - Verify credentials ID matches: `deploy-ssh-creds`
 - Check username/password are correct
-- Try manual SSH: `ssh admin@homelab.local
+- Try manual SSH: `ssh YOUR_DEPLOY_USER@YOUR_NODE.homelab.local`
 
 ### Issue: "Host key verification failed"
 **Solution**: Already handled with `-o StrictHostKeyChecking=no` in pipeline
