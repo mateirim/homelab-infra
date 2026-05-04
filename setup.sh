@@ -167,6 +167,7 @@ echo -e "${GREEN}Applying replacements...${NC}"
 
 replace_in_files "homelab.local" "$DOMAIN"
 replace_in_files "example.com" "$DOMAIN"
+replace_in_files "REPLACE_WITH_YOUR_DOMAIN" "$DOMAIN"
 replace_in_files "OWNER_NAME" "$OWNER_NAME"
 replace_in_files "192.168.1.10" "$CP_IP"
 replace_in_files "192.168.1.1" "$GATEWAY_IP"
@@ -175,12 +176,15 @@ replace_in_files "192.168.1.200" "$LB_START"
 # NFS servers and paths
 replace_in_files "nfs2.homelab.local" "$NFS_SERVER_2"
 replace_in_files "nfs.homelab.local"  "$NFS_SERVER"
+replace_in_files "REPLACE_WITH_NFS_SERVER" "$NFS_SERVER"
+replace_in_files "REPLACE_WITH_NFS_SERVER_2" "$NFS_SERVER_2"
 replace_in_files "/nfs/data"               "$NFS_BASE"
 replace_in_files "/nfs/kube"               "$NFS_KUBE_BASE"
 replace_in_files "/opt/data/music-assistant" "$MUSIC_HOST_PATH"
 
 # Registry host (after domain replacement)
 replace_in_files "registry.${DOMAIN}" "$REGISTRY_HOST"
+replace_in_files "registry.REPLACE_WITH_YOUR_DOMAIN" "$REGISTRY_HOST"
 
 # ArgoCD repo URL
 replace_in_files "YOUR_GITHUB_USERNAME/homelab-infra" "${GITHUB_USER}/${GITHUB_REPO}"
@@ -193,6 +197,16 @@ replace_in_files "YOUR_GITHUB_USERNAME/jenkins-repo" "${GITHUB_USER}/jenkins-rep
 
 # Node hostnames — control plane (always set)
 replace_in_files "REPLACE_WITH_CONTROL_PLANE_HOSTNAME" "${CP_HOSTNAME}"
+
+# Passwords and Tokens (replace in non-secrets files if present)
+replace_in_files "REPLACE_WITH_POSTGRES_PASSWORD" "$PG_PASS"
+replace_in_files "REPLACE_WITH_REDIS_PASSWORD" "$PG_PASS"
+replace_in_files "REPLACE_WITH_ADMIN_PASSWORD" "$GRAFANA_PASS"
+replace_in_files "REPLACE_WITH_LITELLM_MASTER_KEY" "$LITELLM_KEY"
+replace_in_files "REPLACE_WITH_LITELLM_UI_USERNAME" "admin"
+replace_in_files "REPLACE_WITH_LITELLM_UI_PASSWORD" "homelab"
+replace_in_files "REPLACE_WITH_ENCRYPTION_KEY" "$FOREMAN_ENC_KEY"
+replace_in_files "REPLACE_WITH_SECRET_TOKEN" "$FOREMAN_SECRET_TOKEN"
 
 # Helper: remove all nodeAffinity/nodeSelector references to a placeholder hostname.
 # Handles both formats:
@@ -217,8 +231,10 @@ strip_node_pin() {
 # GPU node — replace or strip
 if [[ -n "$GPU_NODE" ]]; then
   replace_in_files "gpu-node" "${GPU_NODE}"
+  replace_in_files "REPLACE_WITH_NODE_HOSTNAME" "${GPU_NODE}"
 else
   strip_node_pin "gpu-node"
+  strip_node_pin "REPLACE_WITH_NODE_HOSTNAME"
   echo -e "  ${YELLOW}↳ gpu-node pinning removed — workloads will schedule on any node${NC}"
 fi
 
@@ -253,7 +269,7 @@ replace_in_files "YOUR_EMAIL@example.com" "${ACME_EMAIL}"
 replace_in_files "REPLACE_WITH_YOUR_DOMAIN" "${DOMAIN}"
 replace_in_files "REPLACE_WITH_CLOUDFLARE_TOKEN" "${CF_TOKEN:-REPLACE_WITH_CLOUDFLARE_TOKEN}"
 
-echo -e "  ${GREEN}✓${NC} domain, IPs, NFS servers, paths, owner name"
+echo -e "  ${GREEN}✓${NC} domain, IPs, NFS servers, paths, owner name, passwords"
 
 # ── write + encrypt all secrets ──────────────────────────────────────────────
 
