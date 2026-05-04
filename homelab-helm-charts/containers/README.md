@@ -18,14 +18,14 @@ Multi-architecture Docker builds (amd64 + arm64) for Kubernetes workloads.
 
 Single architecture (local):
 ```bash
-docker build -t registry.homelab.local/homelab-operator:latest containers/homelab-operator/
+docker build -t registry.REPLACE_WITH_YOUR_DOMAIN/homelab-operator:latest containers/homelab-operator/
 ```
 
 Multi-architecture (requires buildx):
 ```bash
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t registry.homelab.local/homelab-operator:latest \
+  -t registry.REPLACE_WITH_YOUR_DOMAIN/homelab-operator:latest \
   --push containers/homelab-operator/
 ```
 
@@ -34,7 +34,7 @@ docker buildx build \
 GitHub Actions (`.github/workflows/containers.yml`) automatically:
 1. Detects changed container directories on push to main
 2. Builds multi-arch images (amd64 + arm64)
-3. Pushes to `registry.homelab.local/images/<container-name>:latest`
+3. Pushes to `registry.REPLACE_WITH_YOUR_DOMAIN/images/<container-name>:latest`
 
 ## Multi-Architecture Notes
 

@@ -1,0 +1,9 @@
+creation_rules:
+  - path_regex: cluster/.*
+    pgp: YOUR_GPG_KEY_FINGERPRINT_HERE
+  - path_regex: jenkins-repo/.*
+    pgp: YOUR_GPG_KEY_FINGERPRINT_HERE
+  - path_regex: puppet-control-repo/.*
+    pgp: YOUR_GPG_KEY_FINGERPRINT_HERE
+  - path_regex: homelab-helm-charts/.*
+    pgp: YOUR_GPG_KEY_FINGERPRINT_HERE

@@ -407,7 +407,7 @@ externalDatabase:
   user: postgres
 
   ## Database password
-  password: "REPLACE_ME"
+  password: "REPLACE_WITH_POSTGRES_PASSWORD"
 
   ## Database name
   database: nextcloud

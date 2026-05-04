@@ -32,20 +32,20 @@ fail() {
 
 echo -e "${YELLOW}=== homelab-infra Setup Validation ===${NC}\n"
 
-# 1. Check for REPLACE_WITH_ placeholders
+# 1. Check for unfilled placeholders (both REPLACE_WITH_ and REPLACE_ME variants)
 echo -e "${YELLOW}Checking for unfilled placeholders...${NC}"
-UNFILLED=$(grep -r "REPLACE_WITH_" --include="*.yaml" --include="*.yml" \
+UNFILLED=$(grep -rE "REPLACE_WITH_|REPLACE_ME\b" --include="*.yaml" --include="*.yml" \
   --include="*.sh" --include="*.groovy" cluster/ jenkins-repo/ puppet-control-repo/ \
   homelab-helm-charts/ 2>/dev/null | grep -v "node.kubernetes.io/hostname" | wc -l)
 
 if [[ $UNFILLED -gt 0 ]]; then
-  fail "Found $UNFILLED unfilled REPLACE_WITH_ placeholders"
-  grep -r "REPLACE_WITH_" --include="*.yaml" --include="*.yml" \
+  fail "Found $UNFILLED unfilled placeholders (REPLACE_WITH_* or REPLACE_ME)"
+  grep -rE "REPLACE_WITH_|REPLACE_ME\b" --include="*.yaml" --include="*.yml" \
     --include="*.sh" --include="*.groovy" cluster/ jenkins-repo/ puppet-control-repo/ \
     homelab-helm-charts/ 2>/dev/null | grep -v "node.kubernetes.io/hostname" | head -5
   echo "  (showing first 5)"
 else
-  pass "All REPLACE_WITH_ placeholders filled"
+  pass "All placeholders filled (no REPLACE_WITH_* or REPLACE_ME found)"
 fi
 
 # 2. Check GPG key is configured
@@ -143,7 +143,7 @@ if [[ $PLAINTEXT_SECRETS -gt 0 ]]; then
   grep -r "password:\|token:\|key:" \
     --include="*secret*.yaml" --include="*secrets*.yaml" \
     cluster/ jenkins-repo/ puppet-control-repo/ homelab-helm-charts/ 2>/dev/null | \
-    grep -v "ENC\[" | grep -v "REPLACE_WITH_" | grep -v "#" | head -3
+    grep -v "ENC\[" | grep -v "REPLACE_WITH_\|REPLACE_ME" | grep -v "#" | head -3
 else
   pass "All secrets are SOPS-encrypted"
 fi

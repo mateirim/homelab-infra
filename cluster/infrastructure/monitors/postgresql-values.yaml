@@ -16,7 +16,7 @@ config:
     # User key inside secret
     #  key:
     # Only one of password, passwordFile, passwordSecret and pgpassfile can be specified
-    password: "REPLACE_ME"
+    password: "REPLACE_WITH_POSTGRES_PASSWORD"
     # Specify passwordFile if DB password is stored in a file.
     # For example, to use with vault-injector from Hashicorp
     passwordFile: ''

@@ -63,8 +63,8 @@ config:
   FOREMAN_ADMIN_PASSWORD: ""
   ENCRYPTION_KEY: ""
   SECRET_TOKEN: ""
-  DATABASE_URL: postgres://postgres:REPLACE_ME@postgresql.postgresql.svc.cluster.local:5432/foreman
-  REDIS_URL: redis://:REPLACE_ME@redis-master.database.svc.cluster.local:6379/0
+  DATABASE_URL: postgres://postgres:REPLACE_WITH_POSTGRES_PASSWORD@postgresql.postgresql.svc.cluster.local:5432/foreman
+  REDIS_URL: redis://:REPLACE_WITH_REDIS_PASSWORD@redis-master.database.svc.cluster.local:6379/0
 
 
 ## Secrets and Certificates
@@ -111,7 +111,7 @@ postgresql:
       auth:
         postgresqlHost: postgresql.postgresql.svc.cluster.local
         postgresqlUsername: postgres
-        postgresPassword: "REPLACE_ME"
+        postgresPassword: "REPLACE_WITH_POSTGRES_PASSWORD"
         database: foreman
   primary:
     resources:
