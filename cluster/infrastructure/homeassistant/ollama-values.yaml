@@ -1,0 +1,55 @@
+ollama:
+  gpu:
+    # -- Enable GPU integration
+    enabled: true
+  image:
+    tag: "latest"
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: nvidia.com/gpu
+          operator: In
+          values:
+          - "true"
+ingress:
+  # -- Enable ingress controller resource
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/issue-temporary-certificate: "true"
+  hosts:
+    - host: popllama.REPLACE_WITH_YOUR_DOMAIN
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: global-popllama.REPLACE_WITH_YOUR_DOMAIN
+      paths:
+        - path: /
+          pathType: Prefix
+  # --  The tls configuration for hostnames to be covered with this ingress record.
+  tls:
+    - secretName: popllama.REPLACE_WITH_YOUR_DOMAIN-tls
+      hosts:
+        - popllama.REPLACE_WITH_YOUR_DOMAIN
+    - secretName: global-popllama.REPLACE_WITH_YOUR_DOMAIN-tls
+      hosts:
+        - global-popllama.REPLACE_WITH_YOUR_DOMAIN
+persistentVolume:
+  enabled: true
+  volumeName: "popllama-pv"
+  storageClass: "nfs-omv"
+extraEnv:
+  - name: OLLAMA_FLASH_ATTENTION
+    value: "1"
+  - name: OLLAMA_KV_CACHE_TYPE
+    value: "q4_0"
+  - name: OLLAMA_CONTEXT_LENGTH
+    value: "4096"
+  - name: OLLAMA_NUM_PARALLEL
+    value: "1"

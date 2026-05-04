@@ -1,0 +1,43 @@
+# homeassistant-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homeassistant-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: homeassistant
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: home-assistant
+    # version number from: helm search repo homeassistant
+    targetRevision: '^1.34.0'
+    repoURL: https://charts.pree.dev
+    helm:
+      releaseName: homeassistant
+      valueFiles:
+        - $myRepo/infrastructure/homeassistant/ha-values.yaml
+  - chart: music-assistant-server
+    # version number from: helm search repo homeassistant
+    targetRevision: '^0.1.9'
+    repoURL: https://lmatfy.github.io/charts
+    helm:
+      releaseName: homeassistant
+      valueFiles:
+        - $myRepo/infrastructure/homeassistant/music-assistant-values.yaml
+  - chart: ollama
+    targetRevision: '^1.36'
+    repoURL: https://helm.otwld.com/
+    helm:
+      releaseName: ollama
+      valueFiles:
+        - $myRepo/infrastructure/homeassistant/ollama-values.yaml

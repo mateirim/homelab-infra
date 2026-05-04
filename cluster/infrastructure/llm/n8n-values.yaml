@@ -1,0 +1,74 @@
+image:
+  repository: n8nio/n8n
+  tag: "1.73.1"
+  pullPolicy: IfNotPresent
+
+main:
+  extraEnv:
+    - name: WEBHOOK_URL
+      value: "https://n8n.REPLACE_WITH_YOUR_DOMAIN"
+    - name: N8N_HOST
+      value: "n8n.REPLACE_WITH_YOUR_DOMAIN"
+    - name: N8N_PROXY_HOPS
+      value: "1"
+    - name: N8N_TRUST_PROXY
+      value: "true"
+    - name: DB_SQLITE_POOL_SIZE
+      value: "4"
+    - name: N8N_GIT_NODE_DISABLE_BARE_REPOS
+      value: "true"
+    - name: N8N_MIGRATE_FS_STORAGE_PATH
+      value: "true"
+
+  config:
+    n8n:
+      log:
+        level: info
+
+  persistence:
+    enabled: true
+    type: existing
+    existingClaim: n8n-pvc
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: n8n.REPLACE_WITH_YOUR_DOMAIN
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+   - secretName: n8n-tls
+     hosts:
+       - n8n.REPLACE_WITH_YOUR_DOMAIN
+
+resources: {}
+
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: 5678
+  failureThreshold: 60
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: 5678
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: 5678
+  initialDelaySeconds: 10
+  periodSeconds: 10
+

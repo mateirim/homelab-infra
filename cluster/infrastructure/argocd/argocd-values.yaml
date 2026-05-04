@@ -1,0 +1,93 @@
+global:
+ domain: argo.REPLACE_WITH_YOUR_DOMAIN
+configs:
+  params:
+    server.insecure: true
+  cmp:
+    create: true
+    plugins:
+      avp:
+        allowConcurrency: true
+        discover:
+          find:
+            command:
+              - sh
+              - "-c"
+              - "find . -name '*.yaml' | xargs -I {} grep -l 'sops' {}"
+        generate:
+          command:
+            - sh
+            - "-c"
+            - "find . -name '*.yaml' -exec sops -d {} \\; | argocd-vault-plugin generate -"
+        lockRepo: false
+redis-ha:
+  enabled: true
+
+controller:
+  replicas: 1
+
+server:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+  service:
+    type: LoadBalancer
+
+repoServer:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+  env:
+    - name: AVP_TYPE
+      value: sops
+    - name: GNUPGHOME
+      value: /sops-gpg
+  volumes:
+    - name: sops-gpg
+      secret:
+        secretName: sops-gpg
+    - name: custom-tools
+      emptyDir: {}
+  initContainers:
+    - name: download-tools
+      image: alpine:3.18
+      command: [sh, -c]
+      args:
+        - wget -O argocd-vault-plugin https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v1.17.0/argocd-vault-plugin_1.17.0_linux_amd64 &&
+          chmod +x argocd-vault-plugin &&
+          mv argocd-vault-plugin /custom-tools/ &&
+          wget -O sops https://github.com/getsops/sops/releases/download/v3.8.1/sops-v3.8.1.linux.amd64 &&
+          chmod +x sops &&
+          mv sops /custom-tools/
+      volumeMounts:
+        - mountPath: /custom-tools
+          name: custom-tools
+  extraContainers:
+    - name: avp
+      command: [/var/run/argocd/argocd-cmp-server]
+      image: quay.io/argoproj/argocd:v2.10.4
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /tmp
+          name: tmp-dir
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          subPath: avp.yaml
+          name: argocd-cmp-cm
+        - name: custom-tools
+          mountPath: /usr/local/bin/argocd-vault-plugin
+          subPath: argocd-vault-plugin
+        - name: custom-tools
+          mountPath: /usr/local/bin/sops
+          subPath: sops
+        - mountPath: /sops-gpg
+          name: sops-gpg
+          readOnly: true
+
+applicationSet:
+  replicas: 2

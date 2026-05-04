@@ -1,0 +1,129 @@
+#
+# IMPORTANT NOTE
+#
+# This chart inherits from our common library chart. You can check the default values/options here:
+# https://github.com/k8s-at-home/library-charts/tree/main/charts/stable/common/values.yaml
+#
+
+image:
+  # -- image repository
+  repository: ghcr.io/music-assistant/server
+  # @default -- chart.appVersion
+  tag: 2.7.8
+  # -- image pull policy
+  pullPolicy: IfNotPresent
+
+# -- environment variables.
+# @default -- See below
+env:
+  # -- Set the container timezone
+  TZ: UTC
+  LOG_LEVEL: debug
+
+# -- Enable devices to be discoverable
+hostNetwork: true
+
+podAnnotations:
+  container.apparmor.security.beta.kubernetes.io/homeassistant-music-assistant-server: unconfined
+
+securityContext:
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false  # Music Assistant needs to write to /config
+  capabilities:
+    add:
+      - DAC_READ_SEARCH  # Read files from other users' directories
+    drop:
+      - ALL
+
+# -- Configures service settings for the chart. Normally this does not need to be modified.
+# @default -- See values.yaml
+service:
+  main:
+    ports:
+      http:
+        port: 8095
+
+  # -- Enable and configure ingress settings for the chart under this key.
+  # @default -- See values.yaml
+ingress:
+  # -- Enable and configure ingress settings for the chart under this key.
+  # @default -- See values.yaml
+  main:
+    enabled: true
+    annotations: 
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/tls-acme: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      cert-manager.io/issue-temporary-certificate: "true"
+    hosts:
+      - # -- Host address. Helm template can be passed.
+        host: ma.REPLACE_WITH_YOUR_DOMAIN
+        ## Configure the paths for the host
+        paths:
+          - # -- Path.  Helm template can be passed.
+            path: /
+            pathType: Prefix
+            service:
+              # -- Overrides the service name reference for this path
+              # This can be an actual service name, or reference a service identifier
+              # from this values.yaml
+              name: homeassistant-music-assistant-server
+    tls:
+    - secretName: ma-tls
+      hosts:
+        #- virtualHost (default value is pi.hole) will be appended to the hosts
+        - ma.REPLACE_WITH_YOUR_DOMAIN
+
+# -- Configure persistence settings for the chart under this key.
+# @default -- See values.yaml
+persistence:
+  data:
+    enabled: true
+    type: hostPath
+    hostPath: /opt/data/music-assistant
+    mountPath: /data
+  media:
+    enabled: true
+    type: hostPath
+    hostPath: /media
+    mountPath: /media
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: nvidia.com/gpu
+          operator: In
+          values:
+          - "true"
+metrics:
+  # -- Enable and configure a Prometheus serviceMonitor for the chart under this key.
+  # @default -- See values.yaml
+  enabled: true
+  serviceMonitor:
+    interval: 1m
+    scrapeTimeout: 30s
+    labels: {}
+
+  # -- Enable and configure Prometheus Rules for the chart under this key.
+  # @default -- See values.yaml
+  prometheusRule:
+    enabled: true
+    labels: {}
+    # -- Configure additionial rules for the chart under this key.
+    # @default -- See prometheusrules.yaml
+    rules: []
+      # - alert: MusicAssistantServerAbsent
+      #   annotations:
+      #     description: Music assistant server has disappeared from Prometheus service discovery.
+      #     summary: Music assistant server is down.
+      #   expr: |
+      #     absent(up{job=~".*music-assistant-server.*"} == 1)
+      #   for: 5m
+      #   labels:
+      #     severity: critical
+
+      

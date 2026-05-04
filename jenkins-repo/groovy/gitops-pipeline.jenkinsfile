@@ -1,0 +1,364 @@
+pipeline {
+    agent any
+    
+    environment {
+        // Application settings
+        APP_NAME = 'myapp'
+        DOCKER_REGISTRY = 'docker.io/mycompany'
+        
+        // Git repositories
+        APP_REPO = 'https://github.com/mycompany/app-repo.git'
+        GITOPS_REPO = 'https://github.com/mycompany/gitops-repo.git'
+        GITOPS_BRANCH = 'main'
+        
+        // Image versioning
+        IMAGE_TAG = "${env.GIT_COMMIT.take(8)}"
+        IMAGE_FULL = "${DOCKER_REGISTRY}/${APP_NAME}:${IMAGE_TAG}"
+        
+        // GitOps paths
+        GITOPS_DIR = 'gitops-checkout'
+        MANIFEST_PATH = 'apps/myapp/overlays'
+    }
+    
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'production'], description: 'Target environment')
+        booleanParam(name: 'CREATE_PR', defaultValue: false, description: 'Create PR instead of direct commit (for production)')
+        string(name: 'ARGOCD_APP', defaultValue: 'myapp', description: 'ArgoCD application name')
+    }
+    
+    stages {
+        stage('Checkout Source') {
+            steps {
+                echo 'Checking out application source...'
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+                    env.GIT_COMMIT_MSG = sh(
+                        script: 'git log -1 --pretty=%B',
+                        returnStdout: true
+                    ).trim()
+                }
+            }
+        }
+        
+        stage('Build & Test') {
+            steps {
+                echo 'Building application...'
+                sh '''
+                    echo "Running tests..."
+                    # Add your build and test commands here
+                '''
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "Building Docker image: ${IMAGE_FULL}"
+                    sh """
+                        docker build \
+                            --tag ${IMAGE_FULL} \
+                            --tag ${DOCKER_REGISTRY}/${APP_NAME}:latest \
+                            --build-arg VERSION=${IMAGE_TAG} \
+                            --build-arg BUILD_DATE=\$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+                            --build-arg VCS_REF=${GIT_COMMIT} \
+                            .
+                    """
+                }
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                echo 'Scanning Docker image for vulnerabilities...'
+                sh """
+                    # Using Trivy for scanning
+                    docker run --rm \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        aquasec/trivy:latest image \
+                        --severity HIGH,CRITICAL \
+                        --exit-code 0 \
+                        ${IMAGE_FULL}
+                """
+            }
+        }
+        
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    echo "Pushing ${IMAGE_FULL} to registry..."
+                    withCredentials([usernamePassword(
+                        credentialsId: 'docker-registry-credentials',
+                        usernameVariable: 'REGISTRY_USER',
+                        passwordVariable: 'REGISTRY_PASS'
+                    )]) {
+                        sh """
+                            echo "\${REGISTRY_PASS}" | docker login -u "\${REGISTRY_USER}" --password-stdin ${DOCKER_REGISTRY}
+                            docker push ${IMAGE_FULL}
+                            
+                            # Also push latest for the environment
+                            docker tag ${IMAGE_FULL} ${DOCKER_REGISTRY}/${APP_NAME}:${ENVIRONMENT}-latest
+                            docker push ${DOCKER_REGISTRY}/${APP_NAME}:${ENVIRONMENT}-latest
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Checkout GitOps Repo') {
+            steps {
+                script {
+                    echo "Checking out GitOps repository..."
+                    dir(GITOPS_DIR) {
+                        git branch: GITOPS_BRANCH,
+                            credentialsId: 'git-credentials',
+                            url: GITOPS_REPO
+                    }
+                }
+            }
+        }
+        
+        stage('Update Kubernetes Manifests') {
+            steps {
+                script {
+                    echo "Updating manifests for ${params.ENVIRONMENT} environment..."
+                    dir(GITOPS_DIR) {
+                        sh """
+                            # Update image tag in kustomization.yaml
+                            cd ${MANIFEST_PATH}/${params.ENVIRONMENT}
+                            
+                            # Using kustomize edit (if using kustomize)
+                            if [ -f kustomization.yaml ]; then
+                                kustomize edit set image ${APP_NAME}=${IMAGE_FULL}
+                            fi
+                            
+                            # Or update deployment directly (if using plain manifests)
+                            if [ -f deployment.yaml ]; then
+                                sed -i "s|image: ${DOCKER_REGISTRY}/${APP_NAME}:.*|image: ${IMAGE_FULL}|g" deployment.yaml
+                            fi
+                            
+                            # Update version in annotations
+                            if [ -f deployment.yaml ]; then
+                                sed -i "s|app.version: .*|app.version: ${IMAGE_TAG}|g" deployment.yaml
+                            fi
+                            
+                            echo "Updated image to: ${IMAGE_FULL}"
+                            git diff
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Commit & Push to GitOps Repo') {
+            steps {
+                script {
+                    dir(GITOPS_DIR) {
+                        withCredentials([usernamePassword(
+                            credentialsId: 'git-credentials',
+                            usernameVariable: 'GIT_USER',
+                            passwordVariable: 'GIT_PASS'
+                        )]) {
+                            sh """
+                                git config user.name "Jenkins CI"
+                                git config user.email "jenkins@example.com"
+                                
+                                git add ${MANIFEST_PATH}/${params.ENVIRONMENT}/
+                                
+                                # Commit with descriptive message
+                                git commit -m "Update ${APP_NAME} to ${IMAGE_TAG} in ${params.ENVIRONMENT}
+
+Application: ${APP_NAME}
+Environment: ${params.ENVIRONMENT}
+Image: ${IMAGE_FULL}
+Commit: ${GIT_COMMIT_SHORT}
+Message: ${GIT_COMMIT_MSG}
+
+Build: ${BUILD_URL}
+" || echo "No changes to commit"
+                                
+                                # Push to GitOps repo
+                                git push https://${GIT_USER}:${GIT_PASS}@github.com/mycompany/gitops-repo.git ${GITOPS_BRANCH}
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Create Pull Request') {
+            when {
+                expression { return params.CREATE_PR && params.ENVIRONMENT == 'production' }
+            }
+            steps {
+                script {
+                    echo 'Creating pull request for production deployment...'
+                    dir(GITOPS_DIR) {
+                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                            sh """
+                                # Create a new branch
+                                BRANCH_NAME="deploy-${APP_NAME}-${IMAGE_TAG}-${ENVIRONMENT}"
+                                git checkout -b \${BRANCH_NAME}
+                                git push origin \${BRANCH_NAME}
+                                
+                                # Create PR using GitHub CLI
+                                gh pr create \
+                                    --title "Deploy ${APP_NAME} ${IMAGE_TAG} to ${ENVIRONMENT}" \
+                                    --body "**Application**: ${APP_NAME}
+**Environment**: ${params.ENVIRONMENT}
+**Image**: ${IMAGE_FULL}
+**Commit**: ${GIT_COMMIT_SHORT}
+
+**Changes**: ${GIT_COMMIT_MSG}
+
+**Build**: ${BUILD_URL}
+
+Please review and approve this deployment." \
+                                    --base ${GITOPS_BRANCH} \
+                                    --head \${BRANCH_NAME}
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Trigger ArgoCD Sync') {
+            when {
+                expression { return !params.CREATE_PR }
+            }
+            steps {
+                script {
+                    echo "Triggering ArgoCD sync for ${params.ARGOCD_APP}..."
+                    
+                    // Option 1: Using ArgoCD CLI
+                    sh """
+                        # Install ArgoCD CLI if not present
+                        if ! command -v argocd &> /dev/null; then
+                            curl -sSL -o /tmp/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+                            chmod +x /tmp/argocd
+                            ARGOCD_CMD=/tmp/argocd
+                        else
+                            ARGOCD_CMD=argocd
+                        fi
+                        
+                        # Login to ArgoCD
+                        \${ARGOCD_CMD} login argocd.example.com \
+                            --username admin \
+                            --password \${ARGOCD_PASSWORD} \
+                            --grpc-web
+                        
+                        # Sync the application
+                        \${ARGOCD_CMD} app sync ${params.ARGOCD_APP}-${params.ENVIRONMENT} \
+                            --prune \
+                            --timeout 300
+                        
+                        # Wait for sync to complete
+                        \${ARGOCD_CMD} app wait ${params.ARGOCD_APP}-${params.ENVIRONMENT} \
+                            --health \
+                            --timeout 300
+                    """
+                    
+                    // Option 2: Using ArgoCD API
+                    // withCredentials([string(credentialsId: 'argocd-token', variable: 'ARGOCD_TOKEN')]) {
+                    //     sh """
+                    //         curl -X POST \
+                    //             -H "Authorization: Bearer \${ARGOCD_TOKEN}" \
+                    //             https://argocd.example.com/api/v1/applications/${params.ARGOCD_APP}-${params.ENVIRONMENT}/sync
+                    //     """
+                    // }
+                }
+            }
+        }
+        
+        stage('Verify Deployment') {
+            when {
+                expression { return !params.CREATE_PR }
+            }
+            steps {
+                script {
+                    echo 'Verifying deployment...'
+                    sh """
+                        # Wait for rollout to complete
+                        sleep 30
+                        
+                        # Check deployment status using kubectl (if Jenkins has access)
+                        # kubectl rollout status deployment/${APP_NAME} -n ${params.ENVIRONMENT}
+                        
+                        # Or check via ArgoCD
+                        argocd app get ${params.ARGOCD_APP}-${params.ENVIRONMENT} || true
+                    """
+                }
+            }
+        }
+        
+        stage('Smoke Tests') {
+            when {
+                expression { return !params.CREATE_PR }
+            }
+            steps {
+                echo 'Running smoke tests...'
+                sh """
+                    # Add smoke tests here
+                    echo "Checking application health..."
+                    # curl -f https://myapp-${params.ENVIRONMENT}.example.com/health
+                """
+            }
+        }
+    }
+    
+    post {
+        success {
+            script {
+                def message = params.CREATE_PR ? 
+                    "Pull request created for ${APP_NAME} deployment to ${params.ENVIRONMENT}" :
+                    "Successfully deployed ${APP_NAME} ${IMAGE_TAG} to ${params.ENVIRONMENT}"
+                    
+                echo message
+                
+                // Slack notification
+                slackSend(
+                    color: 'good',
+                    message: """
+✅ GitOps Deployment SUCCESS
+**App**: ${APP_NAME}
+**Environment**: ${params.ENVIRONMENT}
+**Image**: ${IMAGE_TAG}
+**Build**: ${BUILD_URL}
+                    """.stripIndent()
+                )
+            }
+        }
+        
+        failure {
+            echo 'GitOps pipeline failed!'
+            slackSend(
+                color: 'danger',
+                message: """
+❌ GitOps Deployment FAILED
+**App**: ${APP_NAME}
+**Environment**: ${params.ENVIRONMENT}
+**Build**: ${BUILD_URL}
+                """.stripIndent()
+            )
+        }
+        
+        always {
+            // Cleanup
+            sh """
+                docker rmi ${IMAGE_FULL} || true
+                docker logout ${DOCKER_REGISTRY} || true
+            """
+            
+            // Clean GitOps checkout
+            dir(GITOPS_DIR) {
+                deleteDir()
+            }
+            
+            cleanWs()
+        }
+    }
+}

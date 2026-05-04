@@ -1,0 +1,144 @@
+# Run with minimal required capabilities instead of full privilege
+privileged: false
+securityContext:
+  capabilities:
+    add:
+      - NET_ADMIN     # Required for DNS and DHCP
+      - NET_RAW       # Required for ICMP/ping
+      - SYS_CHROOT    # Required for chroot operations
+    drop:
+      - ALL
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false  # Pi-hole needs to write to /etc/dnsmasq.d
+  runAsNonRoot: false  # DNS services typically need root
+env:
+  FTLCONF_dns_upstreams: "127.0.0.1#5053"
+dnsmasq:
+  customDnsEntries: []
+  customCnameEntries: []
+replicaCount: 1
+persistentVolumeClaim:
+  # -- set to true to use pvc
+  enabled: true 
+  # -- specify an existing `PersistentVolumeClaim` to use
+  existingClaim: "pihole-data-pvc"
+
+  # -- Annotations for the `PersitentVolumeClaim`
+  annotations: {}
+
+  accessModes:
+    - ReadWriteOnce
+
+  size: "50Gi"
+
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  storageClass: "nfs"
+
+  ## If subPath is set mount a sub folder of a volume instead of the root of the volume.
+  ## This is especially handy for volume plugins that don't natively support sub mounting (like glusterfs).
+  ## subPath: "pihole"
+# -- Specify a priorityClassName
+# priorityClassName: ""
+
+ingress:
+  # -- Generate a Ingress resource
+  enabled: true
+
+  # -- Specify an ingressClassName
+  # ingressClassName: nginx
+
+  # -- Annotations for the ingress
+  annotations:
+
+    #Add 5 tuple
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/affinity-mode: "persistent"
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
+    
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/issue-temporary-certificate: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    # kubernetes.io/tls-acme: 'true'
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  ingressClassName: nginx
+  path: /
+  hosts:
+    - pihole.REPLACE_WITH_YOUR_DOMAIN
+  tls:
+   - secretName: pihole-tls
+     hosts:
+      #- virtualHost (default value is pi.hole) will be appended to the hosts
+       - pihole.REPLACE_WITH_YOUR_DOMAIN
+serviceWeb:
+  loadBalancerIP: REPLACE_WITH_PIHOLE_LB_IP  # assign a free IP from your LB pool (cluster/infrastructure/cni/pool.yaml)
+  type: LoadBalancer
+  externalTrafficPolicy: Local 
+  # internalTrafficPolicy: local 
+serviceDns:
+  mixedService: true
+  type: LoadBalancer
+  loadBalancerIP: REPLACE_WITH_PIHOLE_LB_IP  # assign a free IP from your LB pool (cluster/infrastructure/cni/pool.yaml)
+  #annotations:
+ 
+  externalTrafficPolicy: Local 
+  # internalTrafficPolicy: local 
+serviceDhcp:
+  externalTrafficPolicy: Local 
+  # internalTrafficPolicy: local
+monitoring:
+  # -- Preferably adding prometheus scrape annotations rather than enabling podMonitor.
+  podMonitor:
+    # -- set this to true to enable podMonitor
+    enabled: true
+  # -- Sidecar configuration
+  sidecar:
+    # -- set this to true to enable podMonitor as sidecar
+    enabled: true
+    port: 9617
+    image:
+      # -- the repository to use
+      repository: ekofr/pihole-exporter
+      tag: "0.4.0"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        memory: 128Mi
+      # requests:
+      #  cpu: 100m
+      #  memory: 128Mi
+podDisruptionBudget:
+  # -- set to true to enable creating the PDB
+  enabled: true
+
+doh:
+  # -- set to true to enabled DNS over HTTPs via cloudflared
+  enabled: true
+  monitoring:
+    podMonitor:
+      enabled: true
+
+affinity: {}
+# Optional: add node affinity to pin Pi-hole to specific nodes
+# Example: preferredDuringSchedulingIgnoredDuringExecution with node labels
+# See setup.sh NODE_SELECTOR examples for how to label nodes
+# nodeAffinity:
+#   preferredDuringSchedulingIgnoredDuringExecution:
+#   - weight: 100
+#     preference:
+#       matchExpressions:
+#       - key: workload-type
+#         operator: In
+#         values:
+#         - dns
+

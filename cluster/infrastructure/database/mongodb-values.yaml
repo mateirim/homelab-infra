@@ -1,0 +1,239 @@
+## Reference to one or more secrets to be used when pulling images
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: []
+# - name: "image-pull-secret"
+## Operator
+operator:
+  # Name that will be assigned to most of internal Kubernetes objects like
+  # Deployment, ServiceAccount, Role etc.
+  name: mongo-kubernetes-operator
+
+  # Name of the operator image
+  operatorImageName: mongodb-kubernetes-operator
+
+  # Name of the deployment of the operator pod
+  deploymentName: mongo-kubernetes-operator
+
+  # Version of mongodb-kubernetes-operator
+  # version: "0.8.3-arm64"
+
+  # Uncomment this line to watch all namespaces
+  # watchNamespace: "*"
+
+  # Resources allocated to Operator Pod
+  resources:
+    limits:
+      cpu: 1100m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+
+  # replicas deployed for the operator pod. Running 1 is optimal and suggested.
+  replicas: 1
+
+  # Additional environment variables
+  # extraEnvs:
+  #  - name: "MONGODB_IMAGE"
+  #    value: "mongodb-community-server-staging:7.0.2-ubuntu2204-arm6464"
+
+  podSecurityContext:
+    enabled: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 2000
+    runAsGroup: 2000
+    fsGroup: 0
+    allowPrivilegeEscalation: true
+
+## Operator's database
+database:
+  name: mongo-database
+  # set this to the namespace where you would like
+  # to deploy the MongoDB database,
+  # Note if the database namespace is not same
+  # as the operator namespace,
+  # make sure to set "watchNamespace" to "*"
+  # to ensure that the operator has the
+  # permission to reconcile resources in other namespaces
+  # namespace: mongodb-database
+
+agent:
+  name: mongodb-agent-ubi
+  # version: "107.0.0.8465-1-arm64"
+versionUpgradeHook:
+  name: mongodb-kubernetes-operator-version-upgrade-post-start-hook
+  # version: "1.0.8-arm64"
+readinessProbe:
+  name: mongodb-kubernetes-readinessprobe
+  # version: "1.0.17-arm64"
+mongodb:
+  name: mongo
+  repo: docker.io
+
+registry:
+  agent: quay.io/mongodb
+  versionUpgradeHook: quay.io/mongodb
+  readinessProbe: quay.io/mongodb
+  operator: quay.io/mongodb
+  pullPolicy: Always
+
+# Set to false if CRDs have been installed already. The CRDs can be installed
+# manually from the code repo: github.com/mongodb/mongodb-kubernetes-operator or
+# using the `community-operator-crds` Helm chart.
+community-operator-crds:
+  enabled: false
+# Deploys MongoDB with `resource` attributes.
+createResource: true
+resource:
+  name: mongo-replica-set
+  # version: "latest"
+  members: 1
+  # tls:
+  #   enabled: false
+  #   # Installs Cert-Manager in this cluster.
+  #   useX509: false
+  #   sampleX509User: false
+  #   useCertManager: true
+  #   certificateKeySecretRef: tls-certificate
+  #   caCertificateSecretRef: tls-ca-key-pair
+  #   certManager:
+  #     certDuration: 8760h   # 365 days
+  #     renewCertBefore: 720h   # 30 days
+  persistent: true
+  # affinity:
+  #   nodeAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #       - matchExpressions:
+  #         - key: kubernetes.io/hostname
+  #           operator: In
+  #           values:
+  #           - control-plane
+  #           - nfs-node
+  statefulSet:
+      volumeClaimTemplates:
+        - metadata:
+            name: data-volume
+          spec:
+            accessModes: ["ReadWriteMany"]
+            storageClassName: nfs
+            volumeName: mongo-data-pv
+            resources:
+              requests:
+                storage: 300Gi
+            selector:
+              matchLabels:
+                app: mongo-replica-set-svc
+        - metadata:
+            name: logs-volume
+          spec:
+            accessModes: ["ReadWriteMany"]
+            storageClassName: nfs
+            volumeName: mongo-logs-pv
+            resources:
+              requests:
+                storage: 50Gi
+            selector:
+              matchLabels:
+                app: mongo-replica-set-svc
+      template:
+        spec:
+          externalAccess:
+            externalService:
+              # annotations:
+              #   service.cilium.io/lb-l7: "enabled"
+              spec:
+                type: LoadBalancer # default is LoadBalancer
+                port: 27017
+                # LoadBalancerIP: 192.168.1.X
+                # you can specify other spec overrides if necessary
+          # affinity:
+          #   nodeAffinity:
+          #     requiredDuringSchedulingIgnoredDuringExecution:
+          #       nodeSelectorTerms:
+          #       - matchExpressions:
+          #         - key: kubernetes.io/hostname
+          #           operator: In
+          #           values:
+          #           - control-plane
+          #           - nfs-node
+          containers:
+              - name: mongodb-agent
+                readinessProbe:
+                  failureThreshold: 40
+                  initialDelaySeconds: 5
+                  timeout: 30
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 2000
+                  runAsGroup: 2000
+                  fsGroup: 0
+                  allowPrivilegeEscalation: true
+                podSecurityContext:
+                 enabled: false
+                persistent: true
+              - name: mongod
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 2000
+                  runAsGroup: 2000
+                  fsGroup: 0
+                  allowPrivilegeEscalation: true
+                podSecurityContext:
+                 enabled: false
+                persistent: true
+                externalAccess:
+                  externalService:
+                    # annotations:
+                    #   service.cilium.io/lb-l7: "enabled"
+                    spec:
+                      type: LoadBalancer # default is LoadBalancer
+                      port: 27017
+                      # loadBalancerIP: 192.168.1.X
+                      # you can specify other spec overrides if necessary
+          initContainers:
+            - name: mongodb-agent-readinessprobe
+              securityContext:
+                  allowPrivilegeEscalation: true
+                  runAsNonRoot: true
+                  runAsUser: 2000
+                  runAsGroup: 2000
+              podSecurityContext:
+                 enabled: false
+              persistent: true
+            - name: mongod-posthook
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 2000
+                runAsGroup: 2000
+                allowPrivilegeEscalation: true
+              podSecurityContext:
+                 enabled: false
+              persistent: true
+  security:
+    authentication:
+      modes: ["SCRAM"]
+  users:
+      - name: my-admin-user
+        db: admin
+        passwordSecretRef: # a reference to the secret that will be used to generate the user's password
+          name: my-admin-user-password
+        roles:
+          - name: clusterAdmin
+            db: admin
+          - name: root
+            db: admin
+        scramCredentialsSecretName: my-scram-1
+      - name: my-db-user
+        db: admin
+        passwordSecretRef:
+          name: my-db-user-password
+        roles:
+          - name: dbOwner
+            db: iot
+        scramCredentialsSecretName: my-scram-2
+  additionalMongodConfig:
+    storage.wiredTiger.engineConfig.journalCompressor: zlib
+# the user credentials will be generated from this secret
+# once the credentials are generated, this secret is no longer required

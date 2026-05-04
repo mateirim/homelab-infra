@@ -1,0 +1,46 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitors-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: prometheus
+  syncPolicy:
+    syncOptions:
+    - ServerSideApply=true
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: prometheus-postgres-exporter
+    # version number from: helm search repo grafana
+    targetRevision: '^6.0.0'
+    repoURL: https://prometheus-community.github.io/helm-charts
+    helm:
+      releaseName: prometheus-postgres-exporter
+      valueFiles:
+        - $myRepo/infrastructure/monitors/postgresql-values.yaml
+  - chart: prometheus-mongodb-exporter
+    # version number from: helm search repo grafana
+    targetRevision: '^3.5.0'
+    repoURL: https://prometheus-community.github.io/helm-charts
+    helm:
+      releaseName: prometheus-mongodb-exporter
+      valueFiles:
+        - $myRepo/infrastructure/monitors/mongodb-values.yaml
+  - chart: prometheus-blackbox-exporter
+    # version number from: helm search repo grafana
+    targetRevision: '^8.12.0'
+    repoURL: https://prometheus-community.github.io/helm-charts
+    helm:
+      releaseName: prometheus-blackbox-exporter
+      valueFiles:
+        - $myRepo/infrastructure/monitors/blackbox-values.yaml

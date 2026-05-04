@@ -1,0 +1,61 @@
+# mongodb-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mongodb
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: database
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: community-operator-crds
+    # version number from: helm search repo mongodb
+    targetRevision: '^0.9.0'
+    repoURL: https://mongodb.github.io/helm-charts
+    helm:
+      releaseName: mongodb-crds
+  - chart: community-operator
+    # version number from: helm search repo mongodb
+    targetRevision: '^0.8.3'
+    repoURL: https://mongodb.github.io/helm-charts
+    helm:
+      releaseName: mongodb-operator
+      valueFiles:
+        - $myRepo/infrastructure/database/mongodb-values.yaml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redis
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: database
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: redis-ha
+    targetRevision: '^4.1.0'
+    repoURL: https://dandydeveloper.github.io/charts
+    helm:
+      releaseName: redis
+      valueFiles:
+        - $myRepo/infrastructure/database/redis-values.yaml

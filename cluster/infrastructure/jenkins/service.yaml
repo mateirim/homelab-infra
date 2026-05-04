@@ -1,0 +1,28 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jenkins-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: jenkins
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: jenkins
+    # version number from: helm search repo grafana
+    targetRevision: '^5.1.1'
+    repoURL: https://charts.jenkins.io
+    helm:
+      releaseName: jenkins
+      valueFiles:
+        - $myRepo/infrastructure/jenkins/jenkins-values.yaml

@@ -1,0 +1,32 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  name: mimir-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: mimir
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: mimir-distributed
+    # version number from: helm search repo grafana
+    targetRevision: '^5.2.0-weekly.267'
+    repoURL: https://grafana.github.io/helm-charts
+    helm:
+      skipCrds: false
+      releaseName: mimir
+      valueFiles:
+        - $myRepo/infrastructure/mimir/mimir-values.yaml

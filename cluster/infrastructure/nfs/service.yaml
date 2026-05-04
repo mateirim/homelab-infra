@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nfs-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: nfs-subdir-external-provisioner
+    # version number from: helm search repo grafana
+    targetRevision: '^4.0.18'
+    repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+    helm:
+      releaseName: nfs
+      valueFiles:
+        - $myRepo/infrastructure/nfs/nfs-values.yaml
+  - chart: nfs-subdir-external-provisioner
+    # version number from: helm search repo grafana
+    targetRevision: '^4.0.18'
+    repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+    helm:
+      releaseName: nfs-omv
+      valueFiles:
+        - $myRepo/infrastructure/nfs/omv-values.yaml
+
+
+

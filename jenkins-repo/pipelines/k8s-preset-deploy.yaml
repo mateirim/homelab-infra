@@ -1,0 +1,282 @@
+# Kubernetes Container Testing - Preset Configurations
+# Quick deployment pipeline with common container presets for easy testing
+pipeline:
+  agent:
+    any:
+  
+  parameters:
+    - "choice(name: 'PRESET', choices: ['nginx', 'redis', 'postgres', 'mysql', 'mongodb', 'rabbitmq', 'custom'], description: 'Select a preset configuration or custom')"
+    - "string(name: 'CUSTOM_IMAGE', defaultValue: '', description: 'Custom image (only used if PRESET=custom)')"
+    - "string(name: 'CUSTOM_PORT', defaultValue: '8080', description: 'Custom port (only used if PRESET=custom)')"
+    - "string(name: 'DEPLOYMENT_NAME', defaultValue: '', description: 'Override deployment name (leave empty for auto-generated)')"
+    - "string(name: 'NAMESPACE', defaultValue: 'default', description: 'Kubernetes namespace')"
+    - "text(name: 'EXTRA_ENV', defaultValue: '', description: 'Additional environment variables (KEY=VALUE, one per line)')"
+  
+  stages:
+    - stage: "Configure Deployment"
+      steps:
+        script:
+          - |
+            echo "🔧 Configuring deployment based on preset: ${params.PRESET}"
+            
+            // Define preset configurations
+            def presets = [
+              nginx: [
+                image: 'nginx:alpine',
+                port: 80,
+                name: 'nginx-test',
+                env: [:]
+              ],
+              redis: [
+                image: 'redis:7-alpine',
+                port: 6379,
+                name: 'redis-test',
+                env: [
+                  REDIS_PASSWORD: 'REPLACE_WITH_TEST_PASSWORD'
+                ]
+              ],
+              postgres: [
+                image: 'postgres:15-alpine',
+                port: 5432,
+                name: 'postgres-test',
+                env: [
+                  POSTGRES_PASSWORD: 'REPLACE_WITH_TEST_PASSWORD',
+                  POSTGRES_USER: 'testuser',
+                  POSTGRES_DB: 'testdb'
+                ]
+              ],
+              mysql: [
+                image: 'mysql:8',
+                port: 3306,
+                name: 'mysql-test',
+                env: [
+                  MYSQL_ROOT_PASSWORD: 'REPLACE_WITH_TEST_PASSWORD',
+                  MYSQL_DATABASE: 'testdb',
+                  MYSQL_USER: 'testuser',
+                  MYSQL_PASSWORD: 'REPLACE_WITH_TEST_PASSWORD'
+                ]
+              ],
+              mongodb: [
+                image: 'mongo:7',
+                port: 27017,
+                name: 'mongodb-test',
+                env: [
+                  MONGO_INITDB_ROOT_USERNAME: 'admin',
+                  MONGO_INITDB_ROOT_PASSWORD: 'REPLACE_WITH_TEST_PASSWORD'
+                ]
+              ],
+              rabbitmq: [
+                image: 'rabbitmq:3-management-alpine',
+                port: 5672,
+                name: 'rabbitmq-test',
+                env: [
+                  RABBITMQ_DEFAULT_USER: 'admin',
+                  RABBITMQ_DEFAULT_PASS: 'REPLACE_WITH_TEST_PASSWORD'
+                ]
+              ],
+              custom: [
+                image: params.CUSTOM_IMAGE ?: 'nginx:latest',
+                port: params.CUSTOM_PORT?.toInteger() ?: 8080,
+                name: 'custom-test',
+                env: [:]
+              ]
+            ]
+            
+            // Get configuration
+            def config = presets[params.PRESET]
+            def deployName = params.DEPLOYMENT_NAME?.trim() ?: config.name
+            
+            // Build environment variables YAML
+            def envVarsYaml = ""
+            def allEnvVars = config.env.clone()
+            
+            // Add extra environment variables
+            if (params.EXTRA_ENV?.trim()) {
+              params.EXTRA_ENV.split('\n').each { line ->
+                if (line.trim() && line.contains('=')) {
+                  def parts = line.split('=', 2)
+                  allEnvVars[parts[0].trim()] = parts[1].trim()
+                }
+              }
+            }
+            
+            if (allEnvVars) {
+              envVarsYaml = "        env:\n"
+              allEnvVars.each { key, value ->
+                envVarsYaml += "        - name: ${key}\n"
+                envVarsYaml += "          value: \"${value}\"\n"
+              }
+            }
+            
+            // Store configuration for next stages
+            env.DEPLOY_IMAGE = config.image
+            env.DEPLOY_PORT = config.port.toString()
+            env.DEPLOY_NAME = deployName
+            env.ENV_VARS_YAML = envVarsYaml
+            
+            echo "📋 Deployment Configuration:"
+            echo "  Image: ${env.DEPLOY_IMAGE}"
+            echo "  Port: ${env.DEPLOY_PORT}"
+            echo "  Name: ${env.DEPLOY_NAME}"
+            echo "  Namespace: ${params.NAMESPACE}"
+            if (allEnvVars) {
+              echo "  Environment Variables:"
+              allEnvVars.each { key, value ->
+                echo "    ${key}=${value}"
+              }
+            }
+    
+    - stage: "Create Deployment"
+      steps:
+        script:
+          - |
+            echo "🚀 Creating Kubernetes deployment..."
+            
+            def deploymentYaml = """
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${env.DEPLOY_NAME}
+  namespace: ${params.NAMESPACE}
+  labels:
+    app: ${env.DEPLOY_NAME}
+    preset: ${params.PRESET}
+    managed-by: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${env.DEPLOY_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${env.DEPLOY_NAME}
+        preset: ${params.PRESET}
+    spec:
+      containers:
+      - name: ${env.DEPLOY_NAME}
+        image: ${env.DEPLOY_IMAGE}
+        ports:
+        - containerPort: ${env.DEPLOY_PORT}
+${env.ENV_VARS_YAML}"""
+            
+            writeFile file: 'deployment.yaml', text: deploymentYaml
+            
+            echo "Generated manifest:"
+            sh 'cat deployment.yaml'
+            
+            sh "kubectl apply -f deployment.yaml"
+            
+            echo "⏳ Waiting for deployment to be ready..."
+            sh """
+              kubectl wait --for=condition=available --timeout=300s \
+                deployment/${env.DEPLOY_NAME} \
+                -n ${params.NAMESPACE}
+            """
+    
+    - stage: "Expose Service"
+      steps:
+        script:
+          - |
+            echo "🌐 Creating LoadBalancer service..."
+            
+            def serviceYaml = """
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${env.DEPLOY_NAME}-service
+  namespace: ${params.NAMESPACE}
+  labels:
+    app: ${env.DEPLOY_NAME}
+    preset: ${params.PRESET}
+spec:
+  type: LoadBalancer
+  selector:
+    app: ${env.DEPLOY_NAME}
+  ports:
+  - protocol: TCP
+    port: ${env.DEPLOY_PORT}
+    targetPort: ${env.DEPLOY_PORT}
+"""
+            
+            writeFile file: 'service.yaml', text: serviceYaml
+            sh "kubectl apply -f service.yaml"
+            
+            echo "✅ Service created!"
+    
+    - stage: "Verify and Test"
+      steps:
+        script:
+          - |
+            echo "🔍 Verifying deployment..."
+            
+            sh """
+              echo "Deployment:"
+              kubectl get deployment ${env.DEPLOY_NAME} -n ${params.NAMESPACE}
+              
+              echo ""
+              echo "Pods:"
+              kubectl get pods -l app=${env.DEPLOY_NAME} -n ${params.NAMESPACE}
+              
+              echo ""
+              echo "Service:"
+              kubectl get service ${env.DEPLOY_NAME}-service -n ${params.NAMESPACE}
+              
+              echo ""
+              echo "Pod Logs (last 30 lines):"
+              kubectl logs -l app=${env.DEPLOY_NAME} -n ${params.NAMESPACE} --tail=30 || echo "No logs available yet"
+            """
+            
+            // Preset-specific tests
+            switch(params.PRESET) {
+              case 'nginx':
+                echo "🧪 Testing NGINX..."
+                sh """
+                  POD=\$(kubectl get pod -l app=${env.DEPLOY_NAME} -n ${params.NAMESPACE} -o jsonpath='{.items[0].metadata.name}')
+                  kubectl exec \$POD -n ${params.NAMESPACE} -- nginx -v
+                """
+                break
+              case 'redis':
+                echo "🧪 Testing Redis..."
+                sh """
+                  POD=\$(kubectl get pod -l app=${env.DEPLOY_NAME} -n ${params.NAMESPACE} -o jsonpath='{.items[0].metadata.name}')
+                  kubectl exec \$POD -n ${params.NAMESPACE} -- redis-cli --version
+                """
+                break
+              case 'postgres':
+                echo "🧪 Testing PostgreSQL..."
+                sh """
+                  POD=\$(kubectl get pod -l app=${env.DEPLOY_NAME} -n ${params.NAMESPACE} -o jsonpath='{.items[0].metadata.name}')
+                  kubectl exec \$POD -n ${params.NAMESPACE} -- psql --version
+                """
+                break
+              case 'mysql':
+                echo "🧪 Testing MySQL..."
+                sh """
+                  POD=\$(kubectl get pod -l app=${env.DEPLOY_NAME} -n ${params.NAMESPACE} -o jsonpath='{.items[0].metadata.name}')
+                  kubectl exec \$POD -n ${params.NAMESPACE} -- mysql --version
+                """
+                break
+              case 'mongodb':
+                echo "🧪 Testing MongoDB..."
+                sh """
+                  POD=\$(kubectl get pod -l app=${env.DEPLOY_NAME} -n ${params.NAMESPACE} -o jsonpath='{.items[0].metadata.name}')
+                  kubectl exec \$POD -n ${params.NAMESPACE} -- mongosh --version || kubectl exec \$POD -n ${params.NAMESPACE} -- mongo --version
+                """
+                break
+              case 'rabbitmq':
+                echo "🧪 Testing RabbitMQ..."
+                sh """
+                  POD=\$(kubectl get pod -l app=${env.DEPLOY_NAME} -n ${params.NAMESPACE} -o jsonpath='{.items[0].metadata.name}')
+                  kubectl exec \$POD -n ${params.NAMESPACE} -- rabbitmqctl version
+                """
+                break
+            }
+  
+  post:
+    success:
+      - echo "✅ Deployment successful!"
+    failure:
+      - echo "❌ Deployment failed!"
+    always:
+      - sh 'rm -f deployment.yaml service.yaml'

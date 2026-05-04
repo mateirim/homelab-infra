@@ -1,0 +1,48 @@
+# whisper configuration for andrenarchy chart
+image:
+  repository: rhasspy/wyoming-whisper
+  tag: "1.0.1"
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: "10m"
+    memory: "64Mi"
+
+# Whisper model options: tiny-int8|tiny|base|base-int8|small-int8|small|medium-int8
+args:
+  - '--model'
+  - 'small'
+  - '--language'
+  - 'auto'
+
+env:
+  TZ: UTC
+
+service:
+  main:
+    ports:
+      http:
+        enabled: false
+      wyoming:
+        enabled: true
+        port: 10300
+        protocol: TCP
+
+# Node affinity — optional: uncomment to pin to GPU nodes
+# Remove entire block to let Kubernetes schedule freely
+# nodeSelector:
+#   nvidia.com/gpu: "true"
+
+
+persistence:
+  data:
+    enabled: true
+    type: pvc
+    existingClaim: whisper-pvc
+    mountPath: /data
+  cache:
+    enabled: true
+    type: pvc
+    existingClaim: whisper-cache-pvc
+    mountPath: /data/cache/huggingface/hub

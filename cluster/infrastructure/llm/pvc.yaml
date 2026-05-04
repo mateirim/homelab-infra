@@ -1,0 +1,258 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: llm-pv
+  namespace: llm
+spec:
+  storageClassName: "nfs-omv"
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 5Ti
+  volumeMode: Filesystem
+  claimRef:
+    name: open-webui-ollama
+    namespace: llm
+  hostPath:
+    path: "/nfs/data/llm/webui"
+  # mountOptions:
+  #   - hard
+  #   - nfsvers=4.1
+  # nfs:
+  #   path: /nfs/kube/llm
+  #   server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: webui-pvc
+  namespace: llm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "nfs-omv"
+  volumeName: webui-pv
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: webui-pv
+  namespace: llm
+spec:
+  storageClassName: "nfs-omv"
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: webui-pvc
+    namespace: llm
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+    - intr
+    - timeo=600
+    - retrans=2
+  nfs:
+    path: /nfs/kube/webui
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whisper-pvc
+  namespace: llm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "nfs-omv"
+  volumeName: whisper-pv
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: whisper-pv
+  namespace: llm
+spec:
+  storageClassName: "nfs-omv"
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: whisper-pvc
+    namespace: llm
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+    - intr
+    - timeo=600
+    - retrans=2
+  nfs:
+    path: /nfs/kube/whisper
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whisper-cache-pvc
+  namespace: llm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "nfs-omv"
+  volumeName: whisper-cache-pv
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: whisper-cache-pv
+  namespace: llm
+spec:
+  storageClassName: "nfs-omv"
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: whisper-cache-pvc
+    namespace: llm
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+    - intr
+    - timeo=600
+    - retrans=2
+  nfs:
+    path: /nfs/kube/whisper-cache
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: n8n-pvc
+  namespace: llm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "nfs-omv"
+  volumeName: n8n-pv
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: n8n-pv
+  namespace: llm
+spec:
+  storageClassName: "nfs-omv"
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 20Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: n8n-pvc
+    namespace: llm
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+    - intr
+    - timeo=600
+    - retrans=2
+  nfs:
+    path: /nfs/kube/n8n
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-wyoming-piper-config
+  namespace: llm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "nfs-omv"
+  volumeName: piper-config-pv
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: piper-config-pv
+  namespace: llm
+spec:
+  storageClassName: "nfs-omv"
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: llm-wyoming-piper-config
+    namespace: llm
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+    - intr
+    - timeo=600
+    - retrans=2
+  nfs:
+    path: /nfs/kube/piper-config
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-piper-joe-wyoming-piper-data
+  namespace: llm
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: "nfs-omv"
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-piper-danny-wyoming-piper-data
+  namespace: llm
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: "nfs-omv"
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-piper-romanian-wyoming-piper-data
+  namespace: llm
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: "nfs-omv"
+  resources:
+    requests:
+      storage: 5Gi
+

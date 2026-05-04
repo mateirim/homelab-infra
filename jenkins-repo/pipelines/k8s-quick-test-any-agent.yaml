@@ -1,0 +1,109 @@
+# Quick Kubernetes Container Test Pipeline - Any Agent Version
+# This version installs kubectl if not available, works with any Jenkins agent
+pipeline:
+  agent:
+    any:
+  
+  parameters:
+    - "string(name: 'IMAGE', defaultValue: 'nginx:latest', description: 'Container image to test')"
+    - "string(name: 'NAME', defaultValue: 'quick-test', description: 'Deployment name')"
+    - "string(name: 'PORT', defaultValue: '80', description: 'Container port')"
+    - "string(name: 'ENV', defaultValue: '', description: 'Environment variables (e.g., KEY1=val1,KEY2=val2)')"
+  
+  stages:
+    - stage: "Setup kubectl"
+      steps:
+        script:
+          - |
+            // Check if kubectl is available, install if not
+            if (sh(script: 'which kubectl', returnStatus: true) != 0) {
+              echo "kubectl not found, installing..."
+              sh '''
+                curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                chmod +x kubectl
+                sudo mv kubectl /usr/local/bin/ || mv kubectl ${WORKSPACE}/kubectl
+                export PATH=${WORKSPACE}:$PATH
+              '''
+            } else {
+              echo "kubectl is already available"
+              sh 'kubectl version --client'
+            }
+    
+    - stage: "Deploy Container"
+      steps:
+        script:
+          - |
+            echo "🚀 Quick deploying ${params.IMAGE}..."
+            
+            // Ensure kubectl is in PATH
+            def kubectlCmd = sh(script: 'which kubectl', returnStdout: true).trim()
+            if (!kubectlCmd) {
+              kubectlCmd = "${WORKSPACE}/kubectl"
+            }
+            
+            // Build env vars
+            def envArgs = ""
+            if (params.ENV?.trim()) {
+              params.ENV.split(',').each { pair ->
+                if (pair.trim() && pair.contains('=')) {
+                  def parts = pair.split('=', 2)
+                  envArgs += " --env=${parts[0].trim()}=${parts[1].trim()}"
+                }
+              }
+            }
+            
+            // Create deployment
+            sh """
+              ${kubectlCmd} create deployment ${params.NAME} \\
+                --image=${params.IMAGE} \\
+                --replicas=1 \\
+                --namespace=default \\
+                --dry-run=client -o yaml | ${kubectlCmd} apply -f -
+            """
+            
+            // Add env vars if provided
+            if (envArgs) {
+              sh "${kubectlCmd} set env deployment/${params.NAME} ${envArgs} -n default"
+            }
+            
+            // Expose as service
+            sh """
+              ${kubectlCmd} expose deployment ${params.NAME} \\
+                --port=${params.PORT} \\
+                --target-port=${params.PORT} \\
+                --type=LoadBalancer \\
+                --namespace=default \\
+                --overwrite=true
+            """
+            
+            echo "⏳ Waiting for deployment..."
+            sh "${kubectlCmd} wait --for=condition=available --timeout=180s deployment/${params.NAME} -n default"
+    
+    - stage: "Verify Deployment"
+      steps:
+        script:
+          - |
+            def kubectlCmd = sh(script: 'which kubectl', returnStdout: true).trim()
+            if (!kubectlCmd) {
+              kubectlCmd = "${WORKSPACE}/kubectl"
+            }
+            
+            echo "✅ Deployment ready!"
+            sh """
+              echo "Pods:"
+              ${kubectlCmd} get pods -l app=${params.NAME} -n default
+              
+              echo ""
+              echo "Service:"
+              ${kubectlCmd} get service ${params.NAME} -n default
+              
+              echo ""
+              echo "Logs (last 20 lines):"
+              ${kubectlCmd} logs -l app=${params.NAME} -n default --tail=20 || echo "No logs yet"
+            """
+  
+  post:
+    success:
+      - echo "✅ Quick test deployment successful!"
+    failure:
+      - echo "❌ Deployment failed!"

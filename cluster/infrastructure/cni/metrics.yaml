@@ -1,0 +1,48 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+  name: metrics-server
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  source:
+    chart: metrics-server
+    # version number from: helm search repo grafana
+    targetRevision: '6.5.5'
+    repoURL: https://charts.bitnami.com/bitnami
+    helm:
+      releaseName: metrics-server
+      values: |
+          containerPorts:
+            https: 10250
+          image:
+            registry: docker.io
+            repository: bitnamilegacy/metrics-server
+          apiService:
+            create: true
+          dnsPolicy: ClusterFirstWithHostNet
+          extraArgs:
+            - --cert-dir=/tmp
+            - --secure-port=10250
+            - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+            - --kubelet-use-node-status-port
+            - --metric-resolution=30s
+            - --kubelet-insecure-tls
+          # startupProbe:
+          #   initialDelaySeconds: 300
+          #   periodSeconds: 30
+          # livenessProbe:
+          #   initialDelaySeconds: 300
+          #   periodSeconds: 30
+          # readinessProbe:
+          #   initialDelaySeconds: 300
+          #   periodSeconds: 30

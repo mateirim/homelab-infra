@@ -1,0 +1,208 @@
+# Kubernetes Container Deployment Pipeline
+# This pipeline deploys containers to the default namespace with configurable environment variables
+pipeline:
+  agent:
+    kubernetes:
+      yaml: |
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: kubectl
+            image: bitnami/kubectl:latest
+            command:
+            - cat
+            tty: true
+  
+  parameters:
+    - "string(name: 'CONTAINER_IMAGE', defaultValue: 'nginx:latest', description: 'Container image to deploy (e.g., nginx:latest, redis:alpine)')"
+    - "string(name: 'DEPLOYMENT_NAME', defaultValue: 'test-deployment', description: 'Name of the Kubernetes deployment')"
+    - "string(name: 'REPLICAS', defaultValue: '1', description: 'Number of replicas')"
+    - "string(name: 'CONTAINER_PORT', defaultValue: '80', description: 'Container port to expose')"
+    - "string(name: 'NAMESPACE', defaultValue: 'default', description: 'Kubernetes namespace')"
+    - "text(name: 'ENV_VARS', defaultValue: '', description: 'Environment variables (one per line, format: KEY=VALUE)')"
+    - "booleanParam(name: 'CREATE_SERVICE', defaultValue: true, description: 'Create a LoadBalancer service')"
+    - "string(name: 'SERVICE_PORT', defaultValue: '80', description: 'Service port (if CREATE_SERVICE is enabled)')"
+  
+  environment:
+    - "KUBECONFIG = '/var/jenkins_home/.kube/config'"
+  
+  stages:
+    - stage: "Validate Parameters"
+      steps:
+        script:
+          - |
+            echo "🔍 Validating deployment parameters..."
+            echo "Container Image: ${params.CONTAINER_IMAGE}"
+            echo "Deployment Name: ${params.DEPLOYMENT_NAME}"
+            echo "Namespace: ${params.NAMESPACE}"
+            echo "Replicas: ${params.REPLICAS}"
+            echo "Container Port: ${params.CONTAINER_PORT}"
+            echo "Create Service: ${params.CREATE_SERVICE}"
+            if (params.CREATE_SERVICE) {
+              echo "Service Port: ${params.SERVICE_PORT}"
+            }
+            if (params.ENV_VARS?.trim()) {
+              echo "Environment Variables:"
+              params.ENV_VARS.split('\n').each { line ->
+                if (line.trim()) {
+                  echo "  - ${line}"
+                }
+              }
+            }
+    
+    - stage: "Check Kubernetes Connection"
+      steps:
+        script:
+          - |
+            echo "🔌 Checking Kubernetes connection..."
+            sh 'kubectl cluster-info'
+            sh 'kubectl get nodes'
+            sh "kubectl get namespace ${params.NAMESPACE} || kubectl create namespace ${params.NAMESPACE}"
+    
+    - stage: "Generate Deployment Manifest"
+      steps:
+        script:
+          - |
+            echo "📝 Generating Kubernetes deployment manifest..."
+            
+            // Build environment variables section
+            def envVarsYaml = ""
+            if (params.ENV_VARS?.trim()) {
+              envVarsYaml = "        env:\n"
+              params.ENV_VARS.split('\n').each { line ->
+                if (line.trim() && line.contains('=')) {
+                  def parts = line.split('=', 2)
+                  def key = parts[0].trim()
+                  def value = parts[1].trim()
+                  envVarsYaml += "        - name: ${key}\n"
+                  envVarsYaml += "          value: \"${value}\"\n"
+                }
+              }
+            }
+            
+            // Create deployment manifest
+            def deploymentYaml = """
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${params.DEPLOYMENT_NAME}
+  namespace: ${params.NAMESPACE}
+  labels:
+    app: ${params.DEPLOYMENT_NAME}
+    managed-by: jenkins
+spec:
+  replicas: ${params.REPLICAS}
+  selector:
+    matchLabels:
+      app: ${params.DEPLOYMENT_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${params.DEPLOYMENT_NAME}
+    spec:
+      containers:
+      - name: ${params.DEPLOYMENT_NAME}
+        image: ${params.CONTAINER_IMAGE}
+        ports:
+        - containerPort: ${params.CONTAINER_PORT}
+${envVarsYaml}"""
+            
+            writeFile file: 'deployment.yaml', text: deploymentYaml
+            
+            echo "Generated deployment manifest:"
+            sh 'cat deployment.yaml'
+    
+    - stage: "Deploy to Kubernetes"
+      steps:
+        script:
+          - |
+            echo "🚀 Deploying to Kubernetes..."
+            sh "kubectl apply -f deployment.yaml"
+            
+            echo "⏳ Waiting for deployment to be ready..."
+            sh """
+              kubectl wait --for=condition=available --timeout=300s \
+                deployment/${params.DEPLOYMENT_NAME} \
+                -n ${params.NAMESPACE}
+            """
+            
+            echo "✅ Deployment successful!"
+            sh "kubectl get deployment ${params.DEPLOYMENT_NAME} -n ${params.NAMESPACE}"
+            sh "kubectl get pods -l app=${params.DEPLOYMENT_NAME} -n ${params.NAMESPACE}"
+    
+    - stage: "Create Service"
+      when:
+        - "expression { return params.CREATE_SERVICE }"
+      steps:
+        script:
+          - |
+            echo "🌐 Creating LoadBalancer service..."
+            
+            def serviceYaml = """
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${params.DEPLOYMENT_NAME}-service
+  namespace: ${params.NAMESPACE}
+  labels:
+    app: ${params.DEPLOYMENT_NAME}
+spec:
+  type: LoadBalancer
+  selector:
+    app: ${params.DEPLOYMENT_NAME}
+  ports:
+  - protocol: TCP
+    port: ${params.SERVICE_PORT}
+    targetPort: ${params.CONTAINER_PORT}
+"""
+            
+            writeFile file: 'service.yaml', text: serviceYaml
+            
+            echo "Generated service manifest:"
+            sh 'cat service.yaml'
+            
+            sh "kubectl apply -f service.yaml"
+            
+            echo "✅ Service created!"
+            sh "kubectl get service ${params.DEPLOYMENT_NAME}-service -n ${params.NAMESPACE}"
+    
+    - stage: "Deployment Summary"
+      steps:
+        script:
+          - |
+            echo "📊 Deployment Summary"
+            echo "===================="
+            
+            sh """
+              echo "Deployment Status:"
+              kubectl get deployment ${params.DEPLOYMENT_NAME} -n ${params.NAMESPACE}
+              
+              echo ""
+              echo "Pods:"
+              kubectl get pods -l app=${params.DEPLOYMENT_NAME} -n ${params.NAMESPACE}
+              
+              echo ""
+              echo "Pod Details:"
+              kubectl describe pods -l app=${params.DEPLOYMENT_NAME} -n ${params.NAMESPACE}
+            """
+            
+            if (params.CREATE_SERVICE) {
+              sh """
+                echo ""
+                echo "Service:"
+                kubectl get service ${params.DEPLOYMENT_NAME}-service -n ${params.NAMESPACE}
+                
+                echo ""
+                echo "Service Details:"
+                kubectl describe service ${params.DEPLOYMENT_NAME}-service -n ${params.NAMESPACE}
+              """
+            }
+  
+  post:
+    success:
+      - echo "✅ Container deployment completed successfully!"
+    failure:
+      - echo "❌ Container deployment failed!"
+    always:
+      - sh 'rm -f deployment.yaml service.yaml'

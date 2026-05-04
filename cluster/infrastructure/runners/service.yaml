@@ -1,0 +1,28 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: runners-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: runners
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: actions-runner-controller
+    # version number from: helm search repo grafana
+    targetRevision: '^0.23.7'
+    repoURL: https://actions-runner-controller.github.io/actions-runner-controller
+    helm:
+      releaseName: runners
+      valueFiles:
+        - $myRepo/infrastructure/runners/runners-values.yaml

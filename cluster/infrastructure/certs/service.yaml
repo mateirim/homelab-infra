@@ -1,0 +1,36 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: cert-manager
+    # version number from: helm search repo grafana
+    targetRevision: '^1.12.0'
+    repoURL: https://charts.jetstack.io
+    helm:
+      releaseName: cert-manager
+      valueFiles:
+        - $myRepo/infrastructure/certs/certs-values.yaml
+  - chart: external-dns
+    # version number from: helm search repo grafana
+    targetRevision: '^1.16.1'
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    helm:
+      releaseName: external-dns
+      valueFiles:
+        - $myRepo/infrastructure/certs/external-dns-values.yaml

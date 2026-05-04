@@ -1,0 +1,72 @@
+# NetworkPolicies for Jenkins CI/CD
+# Restrict inbound/outbound to minimize blast radius
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jenkins-allow-ingress
+  namespace: jenkins
+spec:
+  podSelector:
+    matchLabels:
+      app: jenkins
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: proxy  # nginx proxy
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: runners  # GitHub Actions runners
+      ports:
+        - protocol: TCP
+          port: 50000  # Agent listener
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jenkins-allow-outbound
+  namespace: jenkins
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow to API server
+    - to:
+        - podSelector: {}
+          namespaceSelector:
+            matchLabels:
+              name: default
+      ports:
+        - protocol: TCP
+          port: 6443
+    # Allow to database
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: database
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow to GitHub (external)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443

@@ -1,0 +1,315 @@
+# OpenClaw Helm Chart Values
+#
+# IMPORTANT ARCHITECTURE NOTES:
+# - OpenClaw is NOT horizontally scalable
+# - Deploy as a SINGLE INSTANCE only
+# - Do NOT increase replica count
+#
+# NETWORKING NOTES:
+# - trustedProxies does NOT support CIDR notation (exact IP match only)
+# - IPv6 exact addresses may work but are untested
+# - Recommend single-stack IPv4 deployments for simplicity
+
+app-template:
+  defaultPodOptions:
+    affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+            - key: nvidia.com/gpu
+              operator: In
+              values:
+              - "true"
+  controllers:
+    main:
+      containers:
+        main:
+          image:
+            repository: ghcr.io/openclaw/openclaw
+            tag: "latest"
+          envFrom:
+            - secretRef:
+                name: openclaw-secret
+        # Provides headless Chrome via CDP for web scraping and automation skills
+        chromium:
+          image:
+            repository: zenika/alpine-chrome
+            tag: "124"
+          command:
+            - chromium-browser
+          args:
+            - --headless
+            - --no-sandbox
+            - --no-zygote
+            - --disable-setuid-sandbox
+            - --disable-dev-shm-usage
+            - --remote-debugging-address=0.0.0.0
+            - --remote-debugging-port=9222
+          env:
+            DBUS_SESSION_BUS_ADDRESS: "/dev/null"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+
+  configMaps:
+    config:
+      enabled: true
+      data:
+        # OpenClaw configuration - JSON5 format
+        # Sensitive values use ${ENV_VAR} substitution from environment secret
+        openclaw.json: |
+          {
+            // Gateway configuration
+            "gateway": {
+              "port": 18789,
+              "mode": "local",
+              "controlUi": {
+                "allowInsecureAuth": true,
+                "dangerouslyAllowHostHeaderOriginFallback": true
+              },
+              "trustedProxies": ["REPLACE_WITH_NGINX_LB_IP"]
+            },
+
+            // Browser configuration (Chromium sidecar)
+            "browser": {
+              "enabled": true,
+              "defaultProfile": "default",
+              "profiles": {
+                "default": {
+                  "cdpUrl": "http://localhost:9222",
+                  "color": "#4285F4"
+                }
+              }
+            },
+
+            // Agent configuration
+            "agents": {
+              "defaults": {
+                "workspace": "/home/node/.openclaw/workspace",
+                "model": {
+                  "primary": "ollama/gpt-oss:20b"
+                },
+                "imageModel": "ollama/gpt-oss:20b",
+                "userTimezone": "Europe/London",
+                "timeoutSeconds": 600,
+                "maxConcurrent": 1
+              },
+              "list": [
+                {
+                  "id": "main",
+                  "default": true,
+                  "identity": {
+                    "name": "OpenClaw",
+                    "emoji": "🐱"
+                  }
+                }
+              ]
+            },
+
+            // Model Providers (Ollama/OpenAI compatible)
+            "models": {
+              "providers": {
+                "ollama": {
+                  "api": "openai-completions",
+                  "apiKey": "ollama-local",
+                  "baseUrl": "https://ollama.REPLACE_WITH_YOUR_DOMAIN/v1",
+                  "models": [
+                    {
+                      "id": "gpt-oss:20b",
+                      "name": "gpt-oss:20b",
+                      "contextWindow": 131072,
+                      "maxTokens": 8192,
+                      "reasoning": true,
+                      "multimodal": false
+                    }
+                  ]
+                },
+                "hallama": {
+                  "api": "openai-completions",
+                  "apiKey": "ollama-local",
+                  "baseUrl": "https://hallama.REPLACE_WITH_YOUR_DOMAIN/v1",
+                  "models": [
+                    {
+                      "id": "gemma4:e4b",
+                      "name": "gemma4:e4b",
+                      "contextWindow": 128000
+                    }
+                  ]
+                }
+              }
+            },
+
+            // Session management
+            "session": {
+              "scope": "per-sender",
+              "store": "/home/node/.openclaw/sessions",
+              "reset": {
+                "mode": "idle",
+                "idleMinutes": 60
+              }
+            },
+
+            // Messages configuration
+            "messages": {
+              "tts": {
+                "auto": "always",
+                "enabled": true,
+                "provider": "wyoming",
+                "providers": {
+                  "wyoming": {
+                    "baseUrl": "tcp://llm-piper-joe-wyoming-piper:10200",
+                    "voice": "en_US-joe-medium"
+                  }
+                }
+              }
+            },
+
+            // Logging
+            "logging": {
+              "level": "info",
+              "consoleLevel": "info",
+              "consoleStyle": "compact",
+              "redactSensitive": "tools"
+            },
+
+            // Tools configuration
+            "tools": {
+              "profile": "full",
+              "web": {
+                "search": {
+                  "enabled": true
+                },
+                "fetch": {
+                  "enabled": true
+                }
+              }
+            },
+
+            // Channels configuration
+            "channels": {
+              "discord": {
+                "enabled": true,
+                "token": "${DISCORD_TOKEN}"
+              },
+              "whatsapp": {
+                "enabled": true,
+                "selfChatMode": true,
+                "ackReaction": {
+                  "emoji": "🦙",
+                  "direct": true,
+                  "group": "always"
+                },
+                "dmPolicy": "allowlist",
+                "allowFrom": ["+REPLACE_WITH_YOUR_PHONE"],
+                "groupAllowFrom": ["*"],
+                "groups": {
+                  "REPLACE_WITH_WHATSAPP_GROUP_ID@g.us": {
+                    "requireMention": false
+                  }
+                }
+              }
+            }
+          }
+
+  service:
+    main:
+      controller: main
+      # IPv4-only - required due to trustedProxies limitation
+      ipFamilyPolicy: SingleStack
+      ipFamilies:
+        - IPv4
+      ports:
+        http:
+          port: 18789
+
+  ingress:
+    main:
+      enabled: true
+      className: nginx
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/proxy-buffering: "off"
+        nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+        nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+        nginx.ingress.kubernetes.io/websocket-services: "openclaw"
+      hosts:
+        - host: openclaw.REPLACE_WITH_YOUR_DOMAIN
+          paths:
+            - path: /
+              pathType: Prefix
+              service:
+                identifier: main
+                port: http
+      tls:
+        - secretName: openclaw-tls
+          hosts:
+            - openclaw.REPLACE_WITH_YOUR_DOMAIN
+  persistence:
+    # ConfigMap for init container to copy from
+    config:
+      # @schema type:boolean;default:true
+      enabled: true
+      # @schema type:string;default:configMap
+      type: configMap
+      # @schema type:string;default:config
+      identifier: config
+      advancedMounts:
+        main:
+          init-config:
+            - path: /config
+              readOnly: true
+
+    # Entire .openclaw directory as PVC
+    data:
+      # @schema type:boolean;default:true
+      enabled: true
+      # @schema type:string;default:persistentVolumeClaim
+      type: persistentVolumeClaim
+      # @schema type:string;enum:[ReadWriteOnce, ReadWriteMany, ReadOnlyMany];default:ReadWriteOnce
+      # -- PVC access mode
+      accessMode: ReadWriteOnce
+      # @schema type:string;default:5Gi
+      # -- PVC storage size
+      size: 5Gi
+      advancedMounts:
+        main:
+          init-config:
+            - path: /home/node/.openclaw
+          init-skills:
+            - path: /home/node/.openclaw
+          main:
+            - path: /home/node/.openclaw
+
+    # Writable /tmp for containers with readOnlyRootFilesystem
+    tmp:
+      # @schema type:boolean;default:true
+      enabled: true
+      # @schema type:string;default:emptyDir
+      type: emptyDir
+      advancedMounts:
+        main:
+          init-config:
+            - path: /tmp
+          init-skills:
+            - path: /tmp
+          main:
+            - path: /tmp
+          chromium:
+            - path: /tmp

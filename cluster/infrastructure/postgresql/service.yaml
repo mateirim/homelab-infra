@@ -1,0 +1,28 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgresql-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: postgresql
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: postgresql
+    # version number from: helm search repo grafana
+    targetRevision: '^14.3.3'
+    repoURL: https://charts.bitnami.com/bitnami
+    helm:
+      releaseName: postgresql
+      valueFiles:
+        - $myRepo/infrastructure/postgresql/postgresql-values.yaml

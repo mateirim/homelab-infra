@@ -1,0 +1,125 @@
+test_pod:
+  enabled: true
+  image: bats/bats:1.8.2
+  pullPolicy: IfNotPresent
+loki:
+  enabled: true
+  isDefault: true
+  serviceMonitor:
+    # -- If enabled, ServiceMonitor resources for Prometheus Operator are created
+    enabled: true
+  url: http://{{(include "loki.serviceName" .)}}:{{ .Values.loki.service.port }}
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    initialDelaySeconds: 45
+  livenessProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    initialDelaySeconds: 45
+  datasource:
+    jsonData: "{}"
+    uid: ""
+  persistence:
+    enabled: true,
+    # -- Enable volume claims in pod spec
+    volumeClaimsEnabled: true
+    storageClassName: nfs
+    # -- Parameters used for the `data` volume when volumeClaimEnabled if false
+    dataVolumeParameters:
+      emptyDir: {}
+    # -- Enable StatefulSetAutoDeletePVC feature
+    enableStatefulSetAutoDeletePVC: false
+    # -- Size of persistent disk
+    size: 100Gi
+  query_scheduler:
+    max_outstanding_requests_per_tenant: 4096
+  frontend:
+    max_outstanding_per_tenant: 4096
+  query_range:
+    parallelise_shardable_queries: true
+  limits_config:
+    split_queries_by_interval: 15m
+    max_query_parallelism: 32
+promtail:
+  enabled: true
+  privileged: true
+  serviceMonitor:
+    # -- If enabled, ServiceMonitor resources for Prometheus Operator are created
+    enabled: true
+  config:
+    logLevel: info
+    serverPort: 3101
+    clients:
+      - url: http://{{ .Release.Name }}:3100/loki/api/v1/push
+    snippets:
+      extraScrapeConfigs: |
+        - job_name: system
+          pipeline_stages:
+          static_configs:
+          - labels:
+              job: syslog-ng
+              __path__: /var/log/networklogs/*/*/*-syslog.log
+  extraVolumes: []
+  podSecurityContext:
+   enabled: false
+  containerSecurityContext:
+    privileged: true
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: true
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+    capabilities: null
+  # Extra volume mounts together. Corresponds to `extraVolumes`.
+  image:
+    registry: registry.REPLACE_WITH_YOUR_DOMAIN
+    repository: promtail-syslog
+    tag: "1.0.0"
+  imagePullSecrets:
+    - name: registry
+  # Extra args for the Promtail container.
+  extraArgs: []
+  # -- Example:
+  # -- extraArgs:
+  # --   - -client.external-labels=hostname=$(HOSTNAME)
+
+  # -- Extra environment variables. Set up tracing enviroment variables here if .Values.config.enableTracing is true.
+  # Tracing currently only support configure via environment variables. See:
+  # https://grafana.com/docs/loki/latest/clients/promtail/configuration/#tracing_config
+  # https://www.jaegertracing.io/docs/1.16/client-features/
+  extraEnv: []
+  extraPorts:
+    syslog:
+      name: tcp-syslog-ng
+      annotations: {}
+      labels: {}
+      protocol: TCP
+      containerPort: 1514
+      service:
+        type: LoadBalancer
+        # clusterIP: null
+        # loadBalancerIP:
+        port: 1514
+        loadBalancerIP: 192.168.1.2XX  # assign a free IP from your LB pool (cluster/infrastructure/cni/pool.yaml)
+        externalIPs: []
+        # nodePort: null
+        loadBalancerSourceRanges: []
+        externalTrafficPolicy: Local
+    syslog-ng:
+      name: udp-syslog-ng
+      annotations: {}
+      labels: {}
+      protocol: UDP
+      containerPort: 1514
+      service:
+        type: LoadBalancer
+        # clusterIP: null
+        loadBalancerIP: 192.168.1.2XX  # assign a free IP from your LB pool (cluster/infrastructure/cni/pool.yaml)
+        port: 1514
+        externalIPs: []
+        # nodePort: null
+        loadBalancerSourceRanges: []
+        externalTrafficPolicy: Local

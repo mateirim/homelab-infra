@@ -1,0 +1,119 @@
+# Default values for the inadyn helm chart
+# Ref: https://github.com/philippwaller/helm-charts/tree/main/charts/inadyn
+
+## @section Common parameters
+##
+
+## @param nameOverride String to partially override common.names.fullname
+nameOverride: inadyn
+
+## @param fullnameOverride String to fully override common.names.fullname
+fullnameOverride: ""
+
+## @section Inadyn Configuration
+##
+
+## @param inadynConfig Content of the inadyn configuration file ([inadyn.conf](https://fossies.org/linux/inadyn/man/inadyn.conf.5))
+##
+## inadyn is a Dynamic DNS client. It watches your public IP and updates Cloudflare DNS
+## records whenever your router/ISP changes your address (e.g. after a restart).
+##
+## This lets services like WireGuard, Ziti, Home Assistant etc. stay reachable on a
+## stable hostname even when your public IP changes.
+##
+## Setup:
+##   1. In Cloudflare: create an API token with Zone:DNS:Edit for your domain.
+##   2. Replace REPLACE_WITH_CLOUDFLARE_TOKEN below with that token.
+##   3. Replace REPLACE_WITH_YOUR_DOMAIN with your domain (e.g. example.com).
+##   4. List the public-facing hostnames you want kept up-to-date in `hostname`.
+##      These should be the DNS names that nginx/Traefik exposes to the internet.
+##      Add or remove entries freely — one inadyn instance handles all of them.
+##   5. Set proxied = true if you want Cloudflare to proxy the traffic (hides your IP).
+##      Set proxied = false for WireGuard/raw UDP — Cloudflare cannot proxy UDP.
+##
+## Note: only use this if your cluster is behind a dynamic public IP.
+## If you have a static IP, just create the DNS records once manually in Cloudflare.
+inadynConfig: |
+ period      = 60
+ allow-ipv6  = true
+ provider cloudflare.com:REPLACE_WITH_YOUR_DOMAIN-ipv4 {
+   # checkip-server queries Cloudflare's edge to discover your current public IP
+   checkip-server  = 1.1.1.1
+   checkip-path    = /cdn-cgi/trace
+   # username = your zone (root domain)
+   username        = REPLACE_WITH_YOUR_DOMAIN
+   # password = Cloudflare API token (Zone:DNS:Edit)
+   password        = REPLACE_WITH_CLOUDFLARE_TOKEN
+   # List every public hostname that should track your dynamic IP.
+   # These are the services you expose through nginx/Traefik to the internet.
+   hostname        = {wireguard.REPLACE_WITH_YOUR_DOMAIN, ziti-edge.REPLACE_WITH_YOUR_DOMAIN, ha-global.REPLACE_WITH_YOUR_DOMAIN, ollama-global.REPLACE_WITH_YOUR_DOMAIN, helm-global.REPLACE_WITH_YOUR_DOMAIN}
+   ttl             = 1
+   # proxied = false required for WireGuard (UDP — Cloudflare cannot proxy it)
+   # proxied = true  for HTTP/HTTPS services if you want Cloudflare to hide your IP
+   proxied         = false
+ }
+
+## @section Docker Image
+##
+
+## @param image.repository Inadyn image repository
+## @param image.pullPolicy image pull policy
+## @param image.tag Overrides the image tag whose default is the chart appVersion.
+image:
+  repository: troglobit/inadyn
+  pullPolicy: IfNotPresent
+  # Pinned to final release (project archived Oct 2025, no further updates expected)
+  tag: "2.13.0"
+
+## @param imagePullSecrets If defined, uses a Secret to pull an image from a private Docker registry or repository
+imagePullSecrets: []
+
+## @section Container Configuration
+##
+
+## @param replicaCount The number of pods to run
+replicaCount: 1
+
+## @param podAnnotations Annotations to be added to the inadyn pod
+podAnnotations: {}
+
+## @param podSecurityContext Inadyn pod-level security context
+podSecurityContext: {}
+  # fsGroup: 2000
+
+## @param securityContext Security context
+securityContext: {}
+  ## capabilities:
+  ##   drop:
+  ##   - ALL
+  ## readOnlyRootFilesystem: true
+## runAsNonRoot: true
+## runAsUser: 1000
+
+## @param resources Resource limits and requests for inadyn
+# Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+resources: {}
+
+## @param nodeSelector Node labels for pod assignment
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+nodeSelector: {}
+
+## @param tolerations Tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+tolerations: []
+
+## @param affinity Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+affinity: {}
+
+## @section Service Account
+##
+
+## @param serviceAccount.create Specifies whether a service account should be created
+## @param serviceAccount.annotations Annotations to add to the service account
+## @param serviceAccount.name The name of the service account to use.
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+

@@ -1,0 +1,21 @@
+# Puppetfile
+#
+# This file declares the external Puppet modules that this control repo depends on.
+# For more information about the Puppetfile format, see:
+# https://puppet.com/docs/puppet/latest/modules_installing.html#managing-modules-with-a-puppetfile
+
+forge 'https://forge.puppet.com'
+
+# Standard library of functions and types.
+mod 'puppetlabs/stdlib', '8.6.0'
+mod 'puppet-augeasproviders_core', '4.2.0'
+mod 'puppet-augeasproviders_sysctl', '3.3.0'
+
+
+
+
+# --- Tooling ---
+# Manages .env files.
+mod 'bauerkirch/dotenv', '1.1.0'
+# Used by the terraform profile to extract the zip file.
+mod 'puppet/archive', '6.1.0'

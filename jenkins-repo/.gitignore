@@ -1,0 +1,46 @@
+# Build artifacts
+bin/
+dist/
+build/
+target/
+*.jar
+*.war
+*.ear
+*.exe
+
+# Go artifacts
+*.o
+*.a
+*.so
+go.sum
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Environment files
+.env
+.env.local

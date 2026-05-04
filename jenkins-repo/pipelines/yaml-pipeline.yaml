@@ -1,0 +1,196 @@
+# Complex YAML Pipeline - Using correct pipeline-as-yaml syntax
+# Based on: https://plugins.jenkins.io/pipeline-as-yaml/
+
+pipeline:
+  agent:
+    any:
+  
+  environment:
+    APP_NAME: "myapp"
+    BUILD_ENV: "production"
+    DOCKER_REGISTRY: "docker.io"
+  
+  parameters:
+    - string:
+        name: "BRANCH"
+        defaultValue: "main"
+        description: "Branch to build"
+    - booleanParam:
+        name: "DEPLOY"
+        defaultValue: false
+        description: "Deploy after build"
+    - choice:
+        name: "ENVIRONMENT"
+        choices:
+          - "dev"
+          - "staging"
+          - "production"
+        description: "Target environment"
+  
+  stages:
+    - stage: "Checkout"
+      steps:
+        - echo "Checking out source code..."
+        - checkout scm
+        - sh "echo 'Building branch:' && git log -1 --oneline"
+    
+    - stage: "Build"
+      steps:
+        - echo "Building ${APP_NAME}..."
+        - sh |
+            echo "Compiling application..."
+            echo "Build number: ${BUILD_NUMBER}"
+            mkdir -p build
+            echo "Build artifact" > build/app.jar
+            echo "Build completed successfully"
+    
+    - stage: "Test"
+      parallel:
+        - stage: "Unit Tests"
+          steps:
+            - sh |
+                echo "Running unit tests..."
+                sleep 2
+                echo "Unit tests passed"
+        
+        - stage: "Integration Tests"
+          steps:
+            - sh |
+                echo "Compiling application..."
+                echo "Build number: ${BUILD_NUMBER}"
+                mkdir -p build
+                echo "Build artifact" > build/app.jar
+                echo "Build completed successfully"
+    
+    - stage:
+        name: "Test"
+        parallel:
+          - stage:
+              name: "Unit Tests"
+              steps:
+                - sh:
+                    script: |
+                      echo "Running unit tests..."
+                      sleep 2
+                      echo "Unit tests passed ✓"
+          
+          - stage:
+              name: "Integration Tests"
+              steps:
+                - sh:
+                    script: |
+                      echo "Running integration tests..."
+                      sleep 3
+                      echo "Integration tests passed ✓"
+          
+          - stage:
+              name: "Code Quality"
+              steps:
+                - sh:
+                    script: |
+                      echo "Running code quality analysis..."
+                      sleep 2
+                      echo "Code quality check passed ✓"
+    
+    - stage:
+        name: "Package"
+        steps:
+          - echo:
+              message: "Packaging application..."
+          - sh:
+              script: |
+                tar -czf ${APP_NAME}-${BUILD_NUMBER}.tar.gz build/
+                ls -lh *.tar.gz
+          - archiveArtifacts:
+              artifacts: "*.tar.gz"
+              fingerprint: true
+    
+    - stage:
+        name: "Docker Build"
+        when:
+          expression: "params.DEPLOY == true"
+        steps:
+          - echo:
+              message: "Building Docker image..."
+          - sh:
+              script: |
+                docker build -t ${DOCKER_REGISTRY}/${APP_NAME}:${BUILD_NUMBER} .
+                docker tag ${DOCKER_REGISTRY}/${APP_NAME}:${BUILD_NUMBER} ${DOCKER_REGISTRY}/${APP_NAME}:latest
+                echo "Docker image built successfully"
+    
+    - stage:
+        name: "Security Scan"
+        when:
+          expression: "params.DEPLOY == true"
+        steps:
+          - echo:
+              message: "Running security vulnerability scan..."
+          - sh:
+              script: |
+                echo "Scanning for vulnerabilities..."
+                # Uncomment when Trivy is available:
+                # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                #   aquasec/trivy:latest image ${DOCKER_REGISTRY}/${APP_NAME}:${BUILD_NUMBER}
+                echo "Security scan completed ✓"
+    
+    - stage:
+        name: "Deploy"
+        when:
+          expression: "params.DEPLOY == true"
+        steps:
+          - echo:
+              message: "Deploying to ${ENVIRONMENT} environment..."
+          - sh:
+              script: |
+                echo "Target environment: ${ENVIRONMENT}"
+                
+                case "${ENVIRONMENT}" in
+                  dev)
+                    echo "⚙️  Deploying to development server..."
+                    ;;
+                  staging)
+                    echo "🔧 Deploying to staging server..."
+                    ;;
+                  production)
+                    echo "🚀 Deploying to production server..."
+                    echo "Running database migrations..."
+                    ;;
+                esac
+                
+                echo "Deployment completed successfully ✓"
+    
+    - stage:
+        name: "Smoke Tests"
+        when:
+          expression: "params.DEPLOY == true"
+        steps:
+          - echo:
+              message: "Running post-deployment smoke tests..."
+          - sh:
+              script: |
+                sleep 5
+                echo "Checking application health endpoint..."
+                # curl -f http://localhost:8080/health || exit 1
+                echo "Smoke tests passed ✓"
+  
+  post:
+    always:
+      - echo:
+          message: "Pipeline execution completed"
+      - sh:
+          script: |
+            echo "Cleaning up temporary files..."
+            rm -rf temp/ || true
+      - cleanWs: {}
+    
+    success:
+      - echo:
+          message: "✅ Pipeline succeeded!"
+    
+    failure:
+      - echo:
+          message: "❌ Pipeline failed!"
+      - sh:
+          script: |
+            echo "Build failed at $(date)"
+            echo "Check the logs above for details"

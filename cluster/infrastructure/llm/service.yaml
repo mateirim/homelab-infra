@@ -1,0 +1,77 @@
+# llm-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: llm-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: llm
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: open-webui
+    # version number from: helm search repo llm
+    targetRevision: '^3.1.9'
+    repoURL: https://helm.openwebui.com/
+    helm:
+      releaseName: llm
+      valueFiles:
+        - $myRepo/infrastructure/llm/webui-values.yaml
+  - chart: wyoming-piper
+    # SchoolGuy's HelmCharts from GitLab - Joe voice (en_US)
+    targetRevision: '0.1.3'
+    repoURL: https://gitlab.com/api/v4/projects/62293226/packages/helm/stable
+    helm:
+      releaseName: llm-piper-joe
+      valueFiles:
+        - $myRepo/infrastructure/llm/wyoming-piper-values.yaml
+  - chart: whisper
+    # andrenarchy's helm-charts from GitHub
+    targetRevision: '1.0.0'
+    repoURL: https://andrenarchy.github.io/helm-charts/
+    helm:
+      releaseName: llm
+      valueFiles:
+        - $myRepo/infrastructure/llm/whisper-new-values.yaml
+  - chart: searxng
+    # version number from: helm search repo llm
+    targetRevision: '^1.0.7'
+    repoURL: https://charts.kubito.dev
+    helm:
+      releaseName: llm
+      valueFiles:
+        - $myRepo/infrastructure/llm/searxng-values.yaml
+  - chart: n8n
+    # version number from: helm search repo 8gears
+    targetRevision: '^2.0.1'
+    repoURL: oci://8gears.container-registry.com/library/n8n
+    helm:
+      releaseName: llm
+      valueFiles:
+        - $myRepo/infrastructure/llm/n8n-values.yaml
+  - chart: litellm-helm
+    # version number from OCI registry
+    targetRevision: '^0.1.2'
+    repoURL: oci://docker.litellm.ai/berriai/litellm-helm
+    helm:
+      releaseName: litellm
+      valueFiles:
+        - $myRepo/infrastructure/llm/litellm-values.yaml
+  - chart: openclaw
+    # version found via repository check
+    targetRevision: '^1.3.0'
+    repoURL: https://serhanekicii.github.io/openclaw-helm
+    helm:
+      releaseName: openclaw
+      valueFiles:
+        - $myRepo/infrastructure/llm/openclaw-values.yaml

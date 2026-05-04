@@ -1,0 +1,95 @@
+# Quick Kubernetes Container Test Pipeline
+# Simplified pipeline for rapid container testing in the jenkins namespace
+pipeline:
+  agent:
+    kubernetes:
+      yaml: |
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: kubectl
+            image: alpine/k8s:1.28.3
+            command:
+            - sleep
+            args:
+            - "99999"
+            workingDir: /home/jenkins/agent
+  
+  parameters:
+    - "string(name: 'IMAGE', defaultValue: 'nginx:latest', description: 'Container image to test')"
+    - "string(name: 'NAME', defaultValue: 'quick-test', description: 'Deployment name')"
+    - "string(name: 'PORT', defaultValue: '80', description: 'Container port')"
+    - "string(name: 'ENV', defaultValue: '', description: 'Environment variables (e.g., KEY1=val1,KEY2=val2)')"
+  
+  stages:
+    - stage: "Deploy Container"
+      steps:
+        script:
+          - |
+            container('kubectl') {
+              echo "🚀 Quick deploying ${params.IMAGE}..."
+              
+              // Build env vars
+              def envArgs = ""
+              if (params.ENV?.trim()) {
+                params.ENV.split(',').each { pair ->
+                  if (pair.trim() && pair.contains('=')) {
+                    def parts = pair.split('=', 2)
+                    envArgs += " --env=${parts[0].trim()}=${parts[1].trim()}"
+                  }
+                }
+              }
+              
+              // Create deployment using kubectl
+              sh """
+                kubectl create deployment ${params.NAME} \\
+                  --image=${params.IMAGE} \\
+                  --replicas=1 \\
+                  --namespace=jenkins \\
+                  --dry-run=client -o yaml | kubectl apply -f -
+              """
+              
+              // Add env vars if provided
+              if (envArgs) {
+                sh "kubectl set env deployment/${params.NAME} ${envArgs} -n jenkins"
+              }
+              
+              // Expose as service
+              sh """
+                kubectl expose deployment ${params.NAME} \\
+                  --port=${params.PORT} \\
+                  --target-port=${params.PORT} \\
+                  --type=LoadBalancer \\
+                  --namespace=jenkins
+              """
+              
+              echo "⏳ Waiting for deployment..."
+              sh "kubectl wait --for=condition=available --timeout=180s deployment/${params.NAME} -n jenkins"
+            }
+    
+    - stage: "Verify Deployment"
+      steps:
+        script:
+          - |
+            container('kubectl') {
+              echo "✅ Deployment ready!"
+              sh """
+                echo "Pods:"
+                kubectl get pods -l app=${params.NAME} -n jenkins
+                
+                echo ""
+                echo "Service:"
+                kubectl get service ${params.NAME} -n jenkins
+                
+                echo ""
+                echo "Logs (last 20 lines):"
+                kubectl logs -l app=${params.NAME} -n jenkins --tail=20
+              """
+            }
+  
+  post:
+    success:
+      - echo "✅ Quick test deployment successful!"
+    failure:
+      - echo "❌ Deployment failed!"

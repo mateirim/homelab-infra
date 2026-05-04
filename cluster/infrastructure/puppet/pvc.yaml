@@ -1,0 +1,251 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: puppet-data-pvc
+  namespace: puppet
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-omv
+  volumeName: puppet-data-pv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: puppet-data-pv
+  namespace: puppet
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: puppet-data-pvc
+    namespace: puppet
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/puppet/data
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: puppet-confd-pvc
+  namespace: puppet
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-omv
+  volumeName: puppet-confd-pv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: puppet-confd-pv
+  namespace: puppet
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: puppet-confd-pvc
+    namespace: puppet
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/puppet/confd
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: puppet-puppet-pvc
+  namespace: puppet
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-omv
+  volumeName: puppet-puppet-pv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: puppet-puppet-pv
+  namespace: puppet
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: puppet-puppet-pvc
+    namespace: puppet
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/puppet/puppet
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: puppet-server-pvc
+  namespace: puppet
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-omv
+  volumeName: puppet-server-pv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: puppet-server-pv
+  namespace: puppet
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: puppet-server-pvc
+    namespace: puppet
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/puppet/server
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: puppet-puppetdb-pvc
+  namespace: puppet
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-omv
+  volumeName: puppet-puppetdb-pv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: puppet-puppetdb-pv
+  namespace: puppet
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: puppet-puppetdb-pvc
+    namespace: puppet
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/puppet/puppetdb
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: puppet-code-pvc
+  namespace: puppet
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-omv
+  volumeName: puppet-code-pv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: puppet-code-pv
+  namespace: puppet
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: puppet-code-pvc
+    namespace: puppet
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/puppet/code
+    server: REPLACE_WITH_NFS_SERVER_2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: puppet-ca-pvc
+  namespace: puppet
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-omv
+  volumeName: puppet-ca-pv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: puppet-ca-pv
+  namespace: puppet
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: puppet-ca-pvc
+    namespace: puppet
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/puppet/ca
+    server: REPLACE_WITH_NFS_SERVER_2

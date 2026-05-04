@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-replica-set-lb
+  namespace: database
+  labels:
+    app: mongo-replica-set-svc
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.1.2XX  # assign a free IP from your LB pool (cluster/infrastructure/cni/pool.yaml)
+  ports:
+  - port: 27017
+    name: mongo
+  selector:
+    app: mongo-replica-set-svc

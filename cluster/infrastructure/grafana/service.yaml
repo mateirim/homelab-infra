@@ -1,0 +1,28 @@
+# grafana-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: grafana
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: grafana
+    # version number from: helm search repo grafana
+    targetRevision: '^6.59.4'
+    repoURL: https://grafana.github.io/helm-charts
+    helm:
+      releaseName: grafana
+      valueFiles:
+        - $myRepo/infrastructure/grafana/grafana-values.yaml

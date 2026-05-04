@@ -1,0 +1,66 @@
+ipam:
+  mode: "kubernetes"
+  operator:
+    clusterPoolIPv4PodCIDRList:
+      - 10.200.0.0/16
+    clusterPoolIPv4MaskSize: 16
+cni:
+  binPath: /usr/lib/cni
+k8s:
+  requireIPv4PodCIDR: true
+ipv4NativeRoutingCIDR: 10.200.0.0/16
+routingMode: native
+ipv4.enabled: true
+kubeProxyReplacement: true
+loadBalancer:
+  mode: hybrid
+# tunnel: disabled
+encryption:
+  enabled: false
+  type: wireguard
+  persistentKeepalive: "60s"
+autoDirectNodeRoutes: true
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+bgpControlPlane:
+  enabled: true
+# bgp:
+#   enabled: true
+#   announce:
+#     loadBalancerIP: true
+#     podCIDR: true
+endpointRoutes:
+  # -- Enable use of per endpoint routes instead of routing via
+  # the cilium_host interface.
+  enabled: true
+# bpf:
+#   hostRouting: false
+#   masquerade: false
+# containerRuntime:
+#   integration: containerd
+nodePort:
+  enabled: true
+kubeProxyReplacement: true
+socketLB:
+  hostNamespaceOnly: true
+k8sServiceHost: kube.REPLACE_WITH_YOUR_DOMAIN
+k8sServicePort: 6443
+externalIPs:
+  enabled: true
+# hostPort:
+#   enabled: true
+# rollOutCiliumPods: true
+# debug:
+#   enabled: false
+installIptablesRules: true
+# localRedirectPolicy: false
+# policyEnforcementMode: "never"
+# policyAuditMode: true
+# nodeinit:
+#   enabled: true
+# ipMasqAgent:
+#   enabled: true

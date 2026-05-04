@@ -1,0 +1,28 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keda-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: keda
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: keda
+    # version number from: helm search repo grafana
+    targetRevision: '^2.16.0'
+    repoURL:  https://kedacore.github.io/charts
+    helm:
+      releaseName: keda
+      valueFiles:
+        - $myRepo/infrastructure/keda/keda-values.yaml

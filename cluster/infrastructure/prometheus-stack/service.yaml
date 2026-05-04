@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  name: prometheus
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: prometheus
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: kube-prometheus-stack
+    # version number from: helm search repo grafana
+    targetRevision: '^57.0.3'
+    repoURL: https://prometheus-community.github.io/helm-charts
+    helm:
+      skipCrds: true
+      releaseName: prometheus-stack
+      valueFiles:
+        - $myRepo/infrastructure/prometheus-stack/prom-stack-values.yaml
+  - chart: prometheus-pushgateway
+    # version number from: helm search repo grafana
+    targetRevision: '^2.8.0'
+    repoURL: https://prometheus-community.github.io/helm-charts
+    helm:
+      releaseName: prometheus-pushgateway
+      valueFiles:
+        - $myRepo/infrastructure/prometheus-stack/push-gateway-values.yaml

@@ -1,0 +1,171 @@
+# Default values for foreman.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+#
+# Chart: foreman
+# Description: Puppet infrastructure reporting and analytics platform
+# Foreman Source: https://github.com/theforeman/foreman (GPL 3.0)
+# Docker Image: https://github.com/lu1as/docker-foreman (Custom Dockerization)
+# License: GPL 3.0 (See ../../LICENSE and ../../LICENSES.md for details)
+# Attribution: Custom Helm chart for homelab-infra, based on:
+#   - Foreman project (theforeman/foreman)
+#   - Docker Foreman image (lu1as/docker-foreman)
+
+## Global settings
+##
+replicaCount: 1
+
+## Foreman image settings
+##
+image:
+  repository: registry.REPLACE_WITH_YOUR_DOMAIN/foreman
+  tag: latest-amd64
+  pullPolicy: Always
+
+## Nginx sidecar for serving assets or proxying
+##
+nginxSidecar:
+  enabled: false
+  image:
+    repository: nginx
+    tag: stable
+    pullPolicy: IfNotPresent
+
+## Image pull secrets for private registries
+##
+imagePullSecrets: []
+  # - name: your-registry-secret
+
+## Name overrides
+##
+nameOverride: ""
+fullnameOverride: "foreman"
+
+## Service configuration
+##
+service:
+  type: ClusterIP
+  port: 3000
+
+## Ingress configuration
+##
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: foreman.REPLACE_WITH_YOUR_DOMAIN
+  tls:
+    - secretName: foreman.REPLACE_WITH_YOUR_DOMAIN-tls
+      hosts:
+        - foreman.REPLACE_WITH_YOUR_DOMAIN
+
+## Foreman application configuration
+##
+config:
+  FOREMAN_ADMIN_USER: admin
+  FOREMAN_ADMIN_PASSWORD: REPLACE_WITH_ADMIN_PASSWORD
+  ENCRYPTION_KEY: REPLACE_WITH_ENCRYPTION_KEY
+  SECRET_TOKEN: REPLACE_WITH_SECRET_TOKEN
+
+## Secrets and Certificates
+##
+# sshKeySecret: foreman-ssh
+certificateAuthoritySecret: null
+# tlsSecret: foreman-dev-tls
+
+## Resource limits and requests
+##
+resources:
+  limits:
+    cpu: 500m
+    memory: 1024Mi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+## Node selection and scheduling
+##
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - REPLACE_WITH_NODE_HOSTNAME
+
+## PostgreSQL dependency configuration
+## Ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
+##
+postgresql:
+  install: true
+  enabled: true
+  global:
+    postgresql:
+      auth:
+        postgresqlHost: foreman-postgresql-hl.foreman.svc.cluster.local
+        postgresqlUsername: REPLACE_WITH_POSTGRES_USERNAME
+        postgresPassword: REPLACE_WITH_POSTGRES_PASSWORD
+        database: foreman
+  primary:
+    resources:
+      requests:
+        cpu: 1
+        memory: 2048Mi
+      limits:
+        cpu: 1
+        memory: 2048Mi
+    initdb:
+      scriptsConfigMap: "foreman-postgresql-extended-configuration"
+    extendedConfiguration: |
+      shared_buffers = 2GB
+      work_mem = 64MB
+      maintenance_work_mem = 512MB
+      effective_cache_size = 6GB
+      # Connection settings
+      max_connections = 200
+      superuser_reserved_connections = 3
+      # WAL settings
+      wal_buffers = 16MB
+      checkpoint_completion_target = 0.9
+      max_wal_size = 2GB
+      min_wal_size = 1GB
+      # Autovacuum settings
+      autovacuum = on
+      autovacuum_max_workers = 3
+      autovacuum_naptime = 10s
+      autovacuum_vacuum_threshold = 50
+      autovacuum_analyze_threshold = 50
+      autovacuum_vacuum_scale_factor = 0.2
+      autovacuum_analyze_scale_factor = 0.1
+      autovacuum_freeze_max_age = 200000000
+      autovacuum_multixact_freeze_max_age = 400000000
+  persistence:
+    enabled: true
+
+## Redis dependency configuration
+## Ref: https://github.com/bitnami/charts/blob/master/bitnami/redis/values.yaml
+##
+redis:
+  install: true
+  enabled: true
+  image:
+    debug: false
+    repository: bitnami/redis
+    tag: latest
+  auth:
+    enabled: true
+    password: REPLACE_WITH_REDIS_PASSWORD
+  master:
+    persistence:
+      enabled: true
+  replica:
+    replicaCount: 0

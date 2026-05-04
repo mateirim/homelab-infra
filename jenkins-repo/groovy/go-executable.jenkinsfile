@@ -1,0 +1,125 @@
+pipeline {
+    agent any
+    
+    environment {
+        GO_VERSION = '1.21'
+        GOPATH = "${WORKSPACE}/go"
+        PATH = "${GOPATH}/bin:/usr/local/go/bin:${PATH}"
+        APP_NAME = 'myapp'
+        CGO_ENABLED = '0'
+    }
+    
+    stages {
+        stage('Setup Go Environment') {
+            steps {
+                echo 'Setting up Go environment...'
+                sh '''
+                    go version
+                    go env
+                    mkdir -p ${GOPATH}/bin
+                '''
+            }
+        }
+        
+        stage('Download Dependencies') {
+            steps {
+                echo 'Downloading Go dependencies...'
+                sh '''
+                    if [ -f go.mod ]; then
+                        go mod download
+                        go mod verify
+                    else
+                        echo "No go.mod found, skipping dependency download"
+                    fi
+                '''
+            }
+        }
+        
+        stage('Build Go Application') {
+            steps {
+                echo 'Building Go application...'
+                sh '''
+                    # Build for Linux
+                    GOOS=linux GOARCH=amd64 go build -o bin/${APP_NAME}-linux-amd64 -v
+                    
+                    # Build for Windows
+                    GOOS=windows GOARCH=amd64 go build -o bin/${APP_NAME}-windows-amd64.exe -v
+                    
+                    # Build for macOS
+                    GOOS=darwin GOARCH=amd64 go build -o bin/${APP_NAME}-darwin-amd64 -v
+                    
+                    # List built binaries
+                    ls -lh bin/
+                '''
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                echo 'Running Go tests...'
+                sh '''
+                    go test -v ./... -coverprofile=coverage.out
+                    go tool cover -html=coverage.out -o coverage.html
+                '''
+            }
+        }
+        
+        stage('Run Executable') {
+            steps {
+                echo 'Testing the executable...'
+                sh '''
+                    chmod +x bin/${APP_NAME}-linux-amd64
+                    ./bin/${APP_NAME}-linux-amd64 --version || echo "Running application..."
+                    # Add any runtime tests here
+                '''
+            }
+        }
+        
+        stage('Static Analysis') {
+            steps {
+                echo 'Running static analysis...'
+                sh '''
+                    go vet ./...
+                    go fmt ./...
+                    
+                    # Install and run golint if available
+                    if command -v golint &> /dev/null; then
+                        golint ./...
+                    fi
+                '''
+            }
+        }
+        
+        stage('Archive Artifacts') {
+            steps {
+                echo 'Archiving build artifacts...'
+                archiveArtifacts artifacts: 'bin/**/*', fingerprint: true
+                archiveArtifacts artifacts: 'coverage.html', fingerprint: true
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Go build completed successfully!'
+            emailext (
+                subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: """<p>SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+                    <p>Check console output at <a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a></p>""",
+                recipientProviders: [developers(), requestor()]
+            )
+        }
+        failure {
+            echo 'Go build failed!'
+            emailext (
+                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+                    <p>Check console output at <a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a></p>""",
+                recipientProviders: [developers(), requestor()]
+            )
+        }
+        always {
+            cleanWs()
+        }
+    }
+}

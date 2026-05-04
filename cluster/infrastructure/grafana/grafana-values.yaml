@@ -1,0 +1,81 @@
+initChownData:
+  enabled: false
+image:
+  repository: grafana/grafana
+  tag: "11.0.0"
+  pullPolicy: IfNotPresent
+service:
+  enabled: true
+  type: NodePort
+  port: 3000
+  targetPort: 3000
+    # targetPort: 4181 To be used with a proxy extraContainer
+  ## Service annotations. Can be templated..
+  annotations: {}
+  labels: {}
+  portName: service
+  # Adds the appProtocol field to the service. This allows to work with istio protocol selection. Ex: "http" or "tcp"
+  appProtocol: ""
+# persistence:
+  # enabled: true
+  # storageClassName: nfs
+  # existingClaim: grafana-data-pvc
+replicas: 2
+ingress:
+  enabled: true
+  # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
+  # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
+  # ingressClassName: nginx
+  # Values can be templated
+  annotations: 
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/issue-temporary-certificate: "true"
+  labels: {}
+  ingressClassName: nginx
+  path: /
+
+  # pathType is only for k8s >= 1.1=
+  pathType: Prefix
+
+  hosts:
+    - grafana.REPLACE_WITH_YOUR_DOMAIN
+  ## Extra paths to prepend to every host configuration. This is useful when working with annotation based services.
+  extraPaths: []
+  # - path: /*
+  #   backend:
+  #     serviceName: ssl-redirect
+  #     servicePort: use-annotation
+  ## Or for k8s > 1.19
+  # - path: /*
+  #   pathType: Prefix
+  #   backend:
+  #     service:
+  #       name: ssl-redirect
+  #       port:
+  #         name: use-annotation
+  tls:
+   - secretName: grafana-tls
+     hosts:
+       - grafana.REPLACE_WITH_YOUR_DOMAIN
+grafana.ini:
+  security:
+    allow_embedding: true
+    cookie_secure: true
+    cookie_samesite: none
+  database:
+    type: postgres
+    host: postgresql.postgresql.svc.cluster.local
+    name: "grafana"
+    user: "postgres"
+    password: "REPLACE_ME"
+    ssl_mode: disable
+plugins:
+  - volkovlabs-echarts-panel        
+  - yesoreyeram-infinity-datasource 
+  - volkovlabs-variable-panel       
+  - grafana-polystat-panel          
+  - volkovlabs-form-panel           
+  - vertamedia-clickhouse-datasource 
+  - volkovlabs-rss-datasource       

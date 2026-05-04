@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+    
+    environment {
+        PROJECT_NAME = 'simple-build'
+        BUILD_NUMBER = "${env.BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+                checkout scm
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo 'Building the project...'
+                sh '''
+                    echo "Build number: ${BUILD_NUMBER}"
+                    echo "Building ${PROJECT_NAME}..."
+                    # Add your build commands here
+                '''
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                sh '''
+                    echo "Running unit tests..."
+                    # Add your test commands here
+                '''
+            }
+        }
+        
+        stage('Package') {
+            steps {
+                echo 'Packaging artifacts...'
+                sh '''
+                    echo "Creating package..."
+                    # Add your packaging commands here
+                '''
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+        always {
+            cleanWs()
+        }
+    }
+}

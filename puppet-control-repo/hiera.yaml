@@ -1,0 +1,27 @@
+---
+version: 5
+
+defaults:
+  datadir: "data"
+  data_hash: yaml_data
+
+hierarchy:
+  - name: "Per-node data"
+    path: "nodes/%{trusted.certname}.yaml"
+
+  # Iterate over every role in the 'role' array so per-role data files
+  # (e.g. data/roles/k8s_worker.yaml) are loaded for each assigned role.
+  - name: "Per-role data (array)"
+    mapped_paths:
+      - role
+      - rolename
+      - "roles/%{rolename}.yaml"
+
+  # Legacy single-role lookup (kept for backwards compatibility)
+  - name: "Per-role data (legacy)"
+    path: "roles/%{facts.role}.yaml"
+
+  - name: "Per-OS data"
+    path: "os/%{facts.os.family}.yaml"
+  - name: "Common data"
+    path: "common.yaml"

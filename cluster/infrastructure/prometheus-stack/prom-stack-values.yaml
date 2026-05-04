@@ -1,0 +1,101 @@
+grafana:
+  enabled: false
+prometheusOperator:
+  hostNetwork: true
+prometheus:
+  enabled: true
+  hostNetwork:
+    enabled: false
+  service:
+    type: ClusterIP
+  prometheusSpec:
+    hostNetwork: true
+    externalLabels:
+      cluster_name: homelab-k8s
+    serviceMonitorSelectorNilUsesHelmValues: false
+    scrapeConfigSelector:
+      matchLabels:
+        app.kubernetes.io/managed-by: Helm
+    # serviceMonitorSelector:
+    #   matchExpressions:
+    #     - key: app.kubernetes.io/managed-by
+    #       operator: Exists
+    # serviceMonitorNamespaceSelector: {}
+    additionalScrapeConfigs: |
+      - job_name: "Z790"
+        static_configs:
+        - targets: ["REPLACE_WITH_WINDOWS_NODE_IP:9182"]
+      - job_name: "GPU"
+        static_configs:
+        - targets: ["REPLACE_WITH_WINDOWS_NODE_IP:9835"]
+      - job_name: "Gateway"
+        static_configs:
+        - targets: ["prometheus-pushgateway.prometheus.svc.cluster.local:9091"]
+      - job_name: "dcgm-exporter"
+        static_configs:
+        - targets: ["dcgm-exporter.prometheus.svc.cluster.local:9400"]
+      - job_name: "Node"
+        static_configs:
+        - targets: ["prometheus-stack-prometheus-node-exporter.prometheus.svc.cluster.local:9100"]
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: ${1}:${2}
+            target_label: __address__
+    enableRemoteWriteReceiver: true
+    enableFeatures:
+    - remote-write-receiver
+    remoteWrite:
+    - url: http://mimir-gateway.mimir.svc.cluster.local:80/api/v1/push
+      headers:
+        X-Scope-OrgID: test
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 2000
+      runAsGroup: 2000
+      fsGroup: 0
+    podSecurityContext:
+      enabled: false
+
+kubeEtcd:
+  enabled: true
+  service:
+    enabled: true
+    port: 2381
+    targetPort: 2381
+
+defaultRules:
+  create: true
+  disabled:
+    etcdHighNumberOfFailedGRPCRequests: true
+
+kube-state-metrics:
+  releaseLabel: true
+  metricLabelsAllowlist:
+  - nodes=[kubernetes.io/hostname,node.kubernetes.io/instance-type]
+  - pods=[app,component,release]
+  - namespaces=[]
+  - configmaps=[]
+  prometheus:
+    monitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus-operator
+
+prometheus-node-exporter:
+  hostRootFsMount:
+    enabled: false
+  mountPropagation: HostToContainer
+  podLabels:
+    jobLabel: node-exporter
+  releaseLabel: false
+prometheusOperator:
+  verticalPodAutoscaler:
+    enabled: true

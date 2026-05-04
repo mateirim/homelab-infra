@@ -1,0 +1,131 @@
+// Scripted Pipeline Example
+node {
+    def appName = 'my-scripted-app'
+    def buildNumber = env.BUILD_NUMBER
+    def workspace = env.WORKSPACE
+    
+    try {
+        stage('Checkout') {
+            echo 'Checking out source code...'
+            checkout scm
+        }
+        
+        stage('Environment Info') {
+            echo "Build number: ${buildNumber}"
+            echo "Workspace: ${workspace}"
+            echo "Node name: ${env.NODE_NAME}"
+            echo "Job name: ${env.JOB_NAME}"
+            
+            sh '''
+                echo "Environment variables:"
+                env | sort
+            '''
+        }
+        
+        stage('Build') {
+            echo "Building ${appName}..."
+            
+            // Build logic
+            def buildResult = sh(script: '''
+                echo "Compiling application..."
+                echo "Build successful"
+            ''', returnStatus: true)
+            
+            if (buildResult != 0) {
+                error("Build failed with exit code ${buildResult}")
+            }
+        }
+        
+        stage('Test') {
+            parallel(
+                'Unit Tests': {
+                    echo 'Running unit tests...'
+                    sh '''
+                        echo "Unit tests passed"
+                    '''
+                },
+                'Integration Tests': {
+                    echo 'Running integration tests...'
+                    sh '''
+                        echo "Integration tests passed"
+                    '''
+                }
+            )
+        }
+        
+        stage('Archive') {
+            echo 'Archiving artifacts...'
+            
+            // Create some artifacts
+            sh '''
+                mkdir -p artifacts
+                echo "Build artifact" > artifacts/build.txt
+            '''
+            
+            archiveArtifacts artifacts: 'artifacts/**/*', fingerprint: true
+        }
+        
+        stage('Deploy') {
+            timeout(time: 5, unit: 'MINUTES') {
+                echo 'Deploying application...'
+                
+                // Deployment logic
+                def deployScript = '''
+                    echo "Deploying to server..."
+                    echo "Deployment successful"
+                '''
+                
+                sh deployScript
+            }
+        }
+        
+        stage('Post-deployment') {
+            echo 'Running post-deployment tasks...'
+            
+            // Smoke tests
+            def smokeTestResult = sh(
+                script: 'echo "Running smoke tests..."; exit 0',
+                returnStatus: true
+            )
+            
+            if (smokeTestResult == 0) {
+                echo 'Smoke tests passed'
+            } else {
+                echo 'Warning: Smoke tests failed'
+            }
+        }
+        
+        // Success notification
+        currentBuild.result = 'SUCCESS'
+        currentBuild.description = "Build ${buildNumber} completed successfully"
+        
+    } catch (Exception e) {
+        currentBuild.result = 'FAILURE'
+        currentBuild.description = "Build ${buildNumber} failed: ${e.message}"
+        
+        echo "Pipeline failed with error: ${e.message}"
+        throw e
+        
+    } finally {
+        stage('Cleanup') {
+            echo 'Cleaning up workspace...'
+            
+            // Cleanup operations
+            sh '''
+                echo "Performing cleanup..."
+                # Remove temporary files
+                rm -rf temp/ || true
+            '''
+            
+            // Send notification
+            if (currentBuild.result == 'SUCCESS') {
+                echo 'Pipeline completed successfully!'
+            } else {
+                echo 'Pipeline completed with failures!'
+            }
+            
+            // Clean workspace
+            cleanWs()
+        }
+    }
+}

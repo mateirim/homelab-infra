@@ -1,0 +1,79 @@
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: "lb-pool"
+spec:
+  blocks:
+  - cidr: "192.168.1.0/24"  # set to your LB subnet — IPs come from LB_START you set in setup.sh
+---
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumBGPPeeringPolicy
+metadata:
+ name: 01-bgp-peering-policy
+spec:
+ nodeSelector:
+   matchLabels:
+     bgp-policy: rpi
+ virtualRouters:
+ - localASN: 60512
+   exportPodCIDR: true
+   neighbors:
+    - peerAddress: '192.168.1.1/24'  # set to your router/gateway IP
+      peerASN: 60512
+   serviceSelector:
+     matchExpressions:
+     - {key: somekey, operator: NotIn, values: ['never-used-value']}
+---
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumBGPPeeringPolicy
+metadata:
+ name: 02-bgp-peering-policy
+spec:
+ nodeSelector:
+   matchLabels:
+     bgp-policy: fed
+ virtualRouters:
+ - localASN: 60513
+   exportPodCIDR: true
+   neighbors:
+    - peerAddress: '192.168.1.1/24'  # set to your router/gateway IP
+      peerASN: 60513
+   serviceSelector:
+     matchExpressions:
+     - {key: somekey, operator: NotIn, values: ['never-used-value']}
+---
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumBGPPeeringPolicy
+metadata:
+ name: 03-bgp-peering-policy
+spec:
+ nodeSelector:
+   matchLabels:
+     bgp-policy: arch
+ virtualRouters:
+ - localASN: 60514
+   exportPodCIDR: true
+   neighbors:
+    - peerAddress: '192.168.1.1/24'  # set to your router/gateway IP
+      peerASN: 60514
+   serviceSelector:
+     matchExpressions:
+     - {key: somekey, operator: NotIn, values: ['never-used-value']}
+---
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumBGPPeeringPolicy
+metadata:
+ name: 04-bgp-peering-policy
+spec:
+ nodeSelector:
+   matchLabels:
+     bgp-policy: red
+ virtualRouters:
+ - localASN: 60515
+   exportPodCIDR: true
+   neighbors:
+    - peerAddress: '192.168.1.1/24'  # set to your router/gateway IP
+      peerASN: 60515
+   serviceSelector:
+     matchExpressions:
+     - {key: somekey, operator: NotIn, values: ['never-used-value']}

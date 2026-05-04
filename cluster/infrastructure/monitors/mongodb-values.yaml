@@ -1,0 +1,5 @@
+# [mongodb[+srv]://][user:pass@]host1[:port1][,host2[:port2],...][/database][?options]
+mongodb:
+  uri: "${MONGODB_MONITOR_URI}"  # set via secret: mongodb://user:pass@host:27017/admin?replicaSet=...&ssl=false 
+serviceMonitor:
+  enabled: true

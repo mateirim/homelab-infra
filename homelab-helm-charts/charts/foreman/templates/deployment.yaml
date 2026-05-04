@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "foreman.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "foreman.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "foreman.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "foreman.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: foreman
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ include "foreman.fullname" . }}-config
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /users/login
+              port: http
+            initialDelaySeconds: 300
+          readinessProbe:
+            httpGet:
+              path: /users/login
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.sshKeySecret }}
+            - name: ssh-key
+              mountPath: /usr/share/foreman/.ssh
+              readOnly: true
+            {{- end }}
+            {{- if .Values.certificateAuthoritySecret }}
+            - name: certificate-authority
+              mountPath: /etc/pki/ca-trust/source/anchors
+              readOnly: true
+            {{- end }}
+            {{- if .Values.tlsSecret }}
+            - name: tls
+              mountPath: /etc/ssl/foreman
+              readOnly: true
+            {{- end }}
+        {{- if .Values.nginxSidecar.enabled }}
+        - name: nginx
+          image: "{{ .Values.nginxSidecar.image.repository }}:{{ .Values.nginxSidecar.image.tag }}"
+          imagePullPolicy: {{ .Values.nginxSidecar.image.pullPolicy }}
+          ports:
+            - name: nginx-http
+              containerPort: 80
+              protocol: TCP
+          # Add nginx config if needed, or rely on default
+        {{- end }}
+      volumes:
+        {{- if .Values.sshKeySecret }}
+        - name: ssh-key
+          secret:
+            secretName: {{ .Values.sshKeySecret }}
+        {{- end }}
+        {{- if .Values.certificateAuthoritySecret }}
+        - name: certificate-authority
+          secret:
+            secretName: {{ .Values.certificateAuthoritySecret }}
+        {{- end }}
+        {{- if .Values.tlsSecret }}
+        - name: tls
+          secret:
+            secretName: {{ .Values.tlsSecret }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

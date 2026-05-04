@@ -1,0 +1,40 @@
+# Simple SSH Pipeline - Echo Hello World using SSH Steps Plugin
+pipeline:
+  agent:
+    any:
+  
+  parameters:
+    - "string(name: 'SERVER', defaultValue: 'YOUR_NODE.homelab.local', description: 'Remote server')"
+  
+  stages:
+    - stage: "SSH Hello World"
+      steps:
+        script:
+          - |
+            def remote = [:]
+            remote.name = 'deploy-server'
+            remote.host = params.SERVER
+            remote.user = 'homelab'
+            remote.password = ''
+            remote.allowAnyHosts = true
+            
+            withCredentials([usernamePassword(credentialsId: 'deploy-ssh-creds', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')]) {
+              remote.user = SSH_USER
+              remote.password = SSH_PASS
+              sshCommand remote: remote, command: '''
+                echo "Hello World from Jenkins!"
+                echo "Current directory: $(pwd)"
+                echo "Current user: $(whoami)"
+                echo "Date: $(date)"
+                echo "Hostname: $(hostname)"
+                echo "Uptime: $(uptime)"
+                df -h | head -5
+                echo "Command execution completed!"
+              '''
+            }
+  
+  post:
+    success:
+      - echo "✅ SSH command completed successfully!"
+    failure:
+      - echo "❌ SSH command failed!"

@@ -1,0 +1,28 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: puppet-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: puppet
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: puppetserver
+    # version number from: helm search repo grafana
+    targetRevision: '^9.2.0'
+    repoURL: https://puppetlabs.github.io/puppetserver-helm-chart
+    helm:
+      releaseName: puppetserver
+      valueFiles:
+        - $myRepo/infrastructure/puppet/puppet-values.yaml

@@ -1,0 +1,34 @@
+tcp:
+  "8140": "puppet/puppetserver-agents-to-puppet:8140"
+  "8141": "puppet/puppetserver-puppet-compilers:8140"
+controller:
+  allowSnippetAnnotations: true
+  annotations-risk-level: High
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+  service:
+    annotations: {}
+    # clusterIP: ""
+    externalIPs: []
+    # loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    servicePort: 443
+    type: LoadBalancer
+    loadBalancerIP: 192.168.1.2XX  # assign a free IP from your LB pool (cluster/infrastructure/cni/pool.yaml)
+    ports:
+      http: 80
+      https: 443
+      puppet: 8140
+      puppetcomp: 8141
+    targetPorts:
+      http: http
+      https: https
+      puppet: puppet
+      puppetcomp: puppetcomp
+  extraArgs:
+    default-ssl-certificate: "nginx/default-tls"
+    "enable-ssl-passthrough": ""
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster

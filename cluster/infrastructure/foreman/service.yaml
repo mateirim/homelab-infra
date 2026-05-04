@@ -1,0 +1,29 @@
+# foreman helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: foreman-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: foreman
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: foreman
+    # version number from your OCI registry
+    targetRevision: '^1.1.20'
+    repoURL: oci://registry.REPLACE_WITH_YOUR_DOMAIN/charts/foreman
+    passCredentials: true
+    helm:
+      releaseName: foreman
+      valueFiles:
+        - $myRepo/infrastructure/foreman/foreman-values.yaml

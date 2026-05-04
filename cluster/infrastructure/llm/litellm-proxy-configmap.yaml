@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-proxy-config
+  namespace: llm
+data:
+  nginx.conf: |
+    events {
+      worker_connections 1024;
+    }
+    
+    http {
+      # Lua script to strip invalid tool fields
+      init_by_lua_block {
+        cjson = require "cjson"
+      }
+      
+      server {
+        listen 8080;
+        
+        location / {
+          # Read request body
+          lua_need_request_body on;
+          
+          # Modify request body to remove invalid fields
+          access_by_lua_block {
+            local body = ngx.req.get_body_data()
+            if body then
+              local ok, json = pcall(cjson.decode, body)
+              if ok and json.tools then
+                -- Remove invalid fields from tools
+                for i, tool in ipairs(json.tools) do
+                  tool.display_width_px = nil
+                  tool.display_height_px = nil
+                  if tool.input_schema and tool.input_schema.additionalProperties == cjson.null then
+                    tool.input_schema.additionalProperties = nil
+                  end
+                end
+                ngx.req.set_body_data(cjson.encode(json))
+              end
+            end
+          }
+          
+          proxy_pass http://litellm:4000;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+        }
+      }
+    }

@@ -1,0 +1,78 @@
+image:
+  repository: docker.io/photoprism/photoprism
+  tag: "latest"
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: 100G
+  hosts:
+    - host: photoprism-2.REPLACE_WITH_YOUR_DOMAIN
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: photoprism-2-tls
+      hosts:
+        - photoprism-2.REPLACE_WITH_YOUR_DOMAIN
+
+persistence:
+  originals:
+    enabled: true
+    existingClaim: photoprism-2-pvc
+    subPath: originals
+  storage:
+    enabled: true
+    existingClaim: photoprism-2-pvc
+    subPath: storage
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  runAsNonRoot: false
+  allowPrivilegeEscalation: true
+  capabilities:
+    add:
+      - SETUID
+      - SETGID
+
+config:
+  PHOTOPRISM_UID: "1000"
+  PHOTOPRISM_GID: "1000"
+  PHOTOPRISM_SITE_TITLE: "PhotoPrism 2"
+  PHOTOPRISM_APP_NAME: "PhotoPrism 2"
+
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /
+    port: 2342
+  failureThreshold: 60
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /
+    port: 2342
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /
+    port: 2342
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+# Optional: uncomment to pin PhotoPrism to a specific node
+# nodeSelector:
+#   workload-type: storage
+

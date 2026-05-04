@@ -1,0 +1,29 @@
+nfs:
+  server: REPLACE_WITH_NFS_SERVER_2
+  path: "/nfs/kube/"
+  # mountOptions:
+  #   - soft
+  #   - relatime
+  #   - retrans=4
+  #   - timeo=300
+  volumeName: nfs-subdir-external-provisioner-omv
+# Node affinity — optional: uncomment to pin provisioner to NFS/OMV nodes
+# Remove entire block to let Kubernetes schedule the provisioner freely
+# affinity:
+#   nodeAffinity:
+#     preferredDuringSchedulingIgnoredDuringExecution:
+#     - weight: 100
+#       preference:
+#         matchExpressions:
+#         - key: workload-type
+#           operator: In
+#           values:
+#           - nfs-storage
+storageClass:
+  name: nfs-omv
+  defaultClass: true
+  provisionerName: nfs-omv-provisioner
+  accessModes: ReadWriteOnce
+  onDelete: retain
+  reclaimPolicy: Retain
+replicaCount: 1

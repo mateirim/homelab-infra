@@ -1,0 +1,17 @@
+nfs:
+  server: REPLACE_WITH_NFS_SERVER
+  path: "/nfs/data/kube"
+  # mountOptions:
+  #   - soft
+  #   - relatime
+  #   - retrans=4
+  #   - timeo=300
+storageClass:
+  name: nfs
+  defaultClass: true
+  provisionerName: nfs-provisioner
+  accessModes: ReadWriteOnce
+  onDelete: retain
+  reclaimPolicy: Retain
+  
+replicaCount: 1

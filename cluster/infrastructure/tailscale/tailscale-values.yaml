@@ -1,0 +1,6 @@
+oauth:
+  clientId: 'REPLACE_WITH_TAILSCALE_CLIENT_ID'
+  clientSecret: 'REPLACE_WITH_TAILSCALE_CLIENT_SECRET'
+
+# Note: Sensitive values should be in secrets.yaml (SOPS-encrypted)
+# See setup.sh for credential management

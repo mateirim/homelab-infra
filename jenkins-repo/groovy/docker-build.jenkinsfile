@@ -1,0 +1,201 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = credentials('docker-registry-url')
+        DOCKER_CREDENTIALS = credentials('docker-registry-credentials')
+        IMAGE_NAME = 'myapp'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DOCKERFILE_PATH = 'Dockerfile'
+    }
+    
+    parameters {
+        choice(name: 'BUILD_TYPE', choices: ['Development', 'Production'], description: 'Build type')
+        booleanParam(name: 'PUSH_TO_REGISTRY', defaultValue: true, description: 'Push image to registry')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+                checkout scm
+            }
+        }
+        
+        stage('Environment Setup') {
+            steps {
+                script {
+                    echo 'Setting up Docker environment...'
+                    sh '''
+                        docker --version
+                        docker-compose --version
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
+                    
+                    if (params.BUILD_TYPE == 'Production') {
+                        sh """
+                            docker build \
+                                --file ${DOCKERFILE_PATH} \
+                                --build-arg BUILD_ENV=production \
+                                --build-arg VERSION=${IMAGE_TAG} \
+                                --tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
+                                --tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest \
+                                --no-cache \
+                                .
+                        """
+                    } else {
+                        sh """
+                            docker build \
+                                --file ${DOCKERFILE_PATH} \
+                                --build-arg BUILD_ENV=development \
+                                --build-arg VERSION=${IMAGE_TAG} \
+                                --tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
+                                --tag ${DOCKER_REGISTRY}/${IMAGE_NAME}:dev-latest \
+                                .
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Scan Image for Vulnerabilities') {
+            steps {
+                script {
+                    echo 'Scanning Docker image for vulnerabilities...'
+                    sh """
+                        # Using Trivy for vulnerability scanning
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image \
+                            --severity HIGH,CRITICAL \
+                            ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} || true
+                    """
+                }
+            }
+        }
+        
+        stage('Test Docker Image') {
+            steps {
+                script {
+                    echo 'Testing Docker image...'
+                    sh """
+                        # Run container for testing
+                        docker run --rm -d \
+                            --name ${IMAGE_NAME}-test-${BUILD_NUMBER} \
+                            ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        
+                        # Wait for container to be ready
+                        sleep 10
+                        
+                        # Run health check
+                        docker exec ${IMAGE_NAME}-test-${BUILD_NUMBER} echo "Container is running" || exit 1
+                        
+                        # Stop test container
+                        docker stop ${IMAGE_NAME}-test-${BUILD_NUMBER}
+                    """
+                }
+            }
+        }
+        
+        stage('Push to Registry') {
+            when {
+                expression { return params.PUSH_TO_REGISTRY }
+            }
+            steps {
+                script {
+                    echo 'Pushing Docker image to registry...'
+                    withCredentials([usernamePassword(
+                        credentialsId: 'docker-registry-credentials',
+                        usernameVariable: 'REGISTRY_USER',
+                        passwordVariable: 'REGISTRY_PASS'
+                    )]) {
+                        sh """
+                            echo "\${REGISTRY_PASS}" | docker login -u "\${REGISTRY_USER}" --password-stdin ${DOCKER_REGISTRY}
+                            docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            
+                            if [ "${params.BUILD_TYPE}" = "Production" ]; then
+                                docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                            else
+                                docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:dev-latest
+                            fi
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Update Deployment Manifest') {
+            when {
+                expression { return params.BUILD_TYPE == 'Production' }
+            }
+            steps {
+                script {
+                    echo 'Updating Kubernetes deployment manifest...'
+                    sh """
+                        # Update image tag in deployment file
+                        sed -i 's|image: .*${IMAGE_NAME}:.*|image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}|' k8s/deployment.yaml
+                        
+                        # Optionally commit and push changes
+                        git config user.email "jenkins@example.com"
+                        git config user.name "Jenkins CI"
+                        git add k8s/deployment.yaml
+                        git commit -m "Update image tag to ${IMAGE_TAG}" || true
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy with Docker Compose') {
+            steps {
+                script {
+                    echo 'Deploying with Docker Compose...'
+                    sh """
+                        # Create docker-compose override for this build
+                        cat > docker-compose.override.yml <<EOF
+version: '3.8'
+services:
+  app:
+    image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+EOF
+                        
+                        # Deploy using docker-compose
+                        docker-compose up -d
+                        
+                        # Show running containers
+                        docker-compose ps
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo "Docker build and push completed successfully!"
+            echo "Image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+        }
+        failure {
+            echo 'Docker build failed!'
+        }
+        always {
+            script {
+                // Cleanup
+                sh """
+                    # Remove dangling images
+                    docker image prune -f
+                    
+                    # Logout from registry
+                    docker logout ${DOCKER_REGISTRY} || true
+                """
+            }
+            cleanWs()
+        }
+    }
+}

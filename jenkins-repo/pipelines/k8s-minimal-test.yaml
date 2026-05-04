@@ -1,0 +1,29 @@
+# Minimal K8s Test - Matching SSH Pipeline Structure Exactly
+pipeline:
+  agent:
+    any:
+  
+  parameters:
+    - "string(name: 'IMAGE', defaultValue: 'nginx:latest', description: 'Container image')"
+    - "string(name: 'NAME', defaultValue: 'test', description: 'Deployment name')"
+  
+  stages:
+    - stage: "Deploy"
+      steps:
+        script:
+          - |
+            echo "Deploying ${params.IMAGE}..."
+            sh """
+              kubectl create deployment ${params.NAME} \
+                --image=${params.IMAGE} \
+                --replicas=1 \
+                --namespace=default \
+                --dry-run=client -o yaml | kubectl apply -f -
+            """
+            echo "Deployment created"
+  
+  post:
+    success:
+      - echo "✅ Success!"
+    failure:
+      - echo "❌ Failed!"

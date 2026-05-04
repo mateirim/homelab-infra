@@ -1,0 +1,26 @@
+# Redis HA configuration with Sentinel
+image:
+  tag: 8.0
+
+sentinel:
+  enabled: true
+  quorum: 2
+  downAfterMilliseconds: 10000
+
+persistentVolume:
+  enabled: true
+  size: 10Gi
+  storageClass: "nfs"
+
+auth:
+  enabled: false
+metrics:
+  enabled: true
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+

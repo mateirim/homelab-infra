@@ -1,0 +1,69 @@
+
+
+
+masterkey: REPLACE_WITH_LITELLM_MASTER_KEY
+
+extraEnvVars:
+  - name: LITELLM_DROP_PARAMS
+    value: "true"
+  - name: LITELLM_DISABLE_SCHEMA_VALIDATION
+    value: "true"
+  - name: LITELLM_MASTER_KEY
+    value: REPLACE_WITH_LITELLM_MASTER_KEY
+  - name: PORT
+    value: "4000"
+  - name: STORE_MODEL_IN_DB
+    value: "True"
+  - name: UI_USERNAME
+    value: "admin"
+  - name: UI_PASSWORD
+    value: "homelab"
+
+
+
+
+db:
+  deployStandalone: false
+  useExisting: true
+  endpoint: postgresql.postgresql.svc.cluster.local
+  database: litellm
+  secret:
+    name: litellm-db-secret
+    usernameKey: username
+    passwordKey: password
+    endpointKey: endpoint
+    
+migrationJob:
+  enabled: false
+
+service:
+  type: ClusterIP
+  port: 4000
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/issue-temporary-certificate: "true"
+  hosts:
+    - host: litellm.REPLACE_WITH_YOUR_DOMAIN
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+   - secretName: litellm-tls
+     hosts:
+       - litellm.REPLACE_WITH_YOUR_DOMAIN
+
+proxy_config:
+  general_settings:
+    master_key: null
+    drop_params: true  # Allow unknown fields in requests
+    enable_pre_call_checks: false  # Disable strict validation
+    disable_schema_validation: true  # Disable Pydantic validation 
+  model_list:
+    - model_name: gpt-oss
+      litellm_params:
+        model: ollama/gpt-oss:20b
+        api_base: "http://open-webui-ollama.llm.svc.cluster.local:11434"

@@ -1,0 +1,56 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    kubernetes.io/tls-acme: 'true'
+  name: puppet-proxy-compilers
+  namespace: puppet
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - puppet-proxy.REPLACE_WITH_YOUR_DOMAIN
+    secretName: tls-secret
+  rules:
+  - host: puppet-proxy.REPLACE_WITH_YOUR_DOMAIN
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: puppetserver-puppet-compilers
+            port:
+              number: 8443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    kubernetes.io/tls-acme: 'true'
+  name: puppetca-proxy
+  namespace: puppet
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - puppetca-proxy.REPLACE_WITH_YOUR_DOMAIN
+    secretName: tls-secret
+  rules:
+  - host: puppetca-proxy.REPLACE_WITH_YOUR_DOMAIN
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: puppetserver-agents-to-puppet
+            port:
+              number: 8443

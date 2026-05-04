@@ -1,0 +1,28 @@
+# loki-stack helm-chart deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pihole-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: pihole
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: pihole
+    # version number from: helm search repo grafana
+    targetRevision: '^2.19.0'
+    repoURL: https://mojo2600.github.io/pihole-kubernetes
+    helm:
+      releaseName: pihole
+      valueFiles:
+        - $myRepo/infrastructure/pihole/pihole-values.yaml

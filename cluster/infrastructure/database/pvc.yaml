@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongo-data-pv
+  namespace: database
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 300Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: data-volume-mongo-replica-set-0
+    namespace: database
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/data/mongodb/0/data
+    server: REPLACE_WITH_NFS_SERVER
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongo-logs-pv
+  namespace: database
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: logs-volume-mongo-replica-set-0
+    namespace: database
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/data/mongodb/0/logs
+    server: REPLACE_WITH_NFS_SERVER

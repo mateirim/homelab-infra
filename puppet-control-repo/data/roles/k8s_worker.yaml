@@ -1,0 +1,22 @@
+---
+# Hiera data for role::k8s_worker
+# Defaults tuned for homelab-k8s
+# Override in per-node YAML files if needed
+
+# Kubernetes minor version — controls which apt/yum repo to add
+profile::k8s_worker::k8s_minor: '1.35'
+
+# Package version pin (Debian: apt-get install kubelet=1.35* )
+profile::k8s_worker::k8s_pkg_ver: '1.35*'
+
+# Containerd version pin (from Docker's repo)
+profile::k8s_worker::ctr_pkg_ver: '1.7*'
+
+# CRI socket — containerd default
+profile::k8s_worker::cri_socket: 'unix:///var/run/containerd/containerd.sock'
+
+# Cluster API endpoint (control-plane LB / DNS)
+profile::k8s_worker::api_endpoint: 'kube.homelab.local:6443'
+
+# Pod subnet — must match kubeadm ClusterConfiguration + Cilium IPAM
+profile::k8s_worker::pod_cidr: '10.200.0.0/16'

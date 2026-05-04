@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: docker-registry-ui
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: registry
+  syncPolicy:
+    automated:
+      selfHeal: true
+  sources:
+  - targetRevision: 'main'
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
+    ref: myRepo
+  - chart: docker-registry-ui
+    targetRevision: '1.1.4'
+    repoURL: https://helm.joxit.dev
+    helm:
+      releaseName: docker-registry-ui
+      valueFiles:
+        - $myRepo/infrastructure/registry/docker-registry-ui-values.yaml

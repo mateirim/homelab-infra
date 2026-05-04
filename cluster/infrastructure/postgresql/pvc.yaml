@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgresql-data-pvc
+  namespace: postgresql
+  annotations:
+    argocd.argoproj.io/sync-options: Delete=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  volumeName: postgresql-data-pv
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgresql-data-pv
+  namespace: postgresql
+  annotations:
+    argocd.argoproj.io/sync-options: Delete=false
+spec:
+  storageClassName: "nfs"
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  claimRef:
+    name: postgresql-data-pvc
+    namespace: postgresql
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /nfs/data/postgresql
+    server: REPLACE_WITH_NFS_SERVER

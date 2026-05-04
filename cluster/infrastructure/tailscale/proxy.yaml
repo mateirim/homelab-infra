@@ -1,0 +1,68 @@
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: subnet-router-class
+  namespace: wireguard-system 
+spec:
+  tailscale:
+    # This automatically runs the pod with --accept-routes
+    acceptRoutes: true
+  statefulSet:
+    pod:
+      # You can add labels or annotations here, but NOT 'spec'
+      labels:
+        app: tailscale-subnet-router
+---
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyGroup
+metadata:
+  name: ts-proxies
+  namespace: wireguard-system
+spec:
+  type: egress
+  proxyClass: subnet-router-class
+  replicas: 3
+---
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyGroup
+metadata:
+  name: ts-proxies-out
+  namespace: wireguard-system
+spec:
+  type: ingress
+  proxyClass: subnet-router-class
+  replicas: 3
+---
+apiVersion: tailscale.com/v1alpha1
+kind: Connector
+metadata:
+  name: ts-pod-cidrs
+  namespace: wireguard-system
+spec:
+  hostname: ts-pod-cidrs
+  proxyClass: subnet-router-class
+  subnetRouter:
+    advertiseRoutes:
+      - "192.168.0.0/16"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-proxy
+  namespace: wireguard-system
+  annotations:
+    # Critical: Tell this Ingress to use the ProxyClass that accepts routes
+    tailscale.com/proxy-class: subnet-router-class
+    kubernetes.io/ingress.allow-http: "false"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: tailscale
+  defaultBackend:
+    service:
+      name: ingress-nginx-controller
+      port:
+        name: https
+  tls:
+    - hosts:
+        - nginx

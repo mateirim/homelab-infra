@@ -1,0 +1,27 @@
+installCRDs: true
+webhook:
+  replicaCount: 3
+  timeoutSeconds: 10
+ingressShim:
+  defaultIssuerName: letsencrypt-prod
+  defaultIssuerKind: ClusterIssuer
+# extraArgs:
+#   - '--dns01-recursive-nameservers-only'
+#   - '--dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53'
+prometheus:
+  # Enable Prometheus monitoring for the cert-manager controller and webhook.
+  # If you use the Prometheus Operator, set prometheus.podmonitor.enabled or
+  # prometheus.servicemonitor.enabled, to create a PodMonitor or a
+  # ServiceMonitor resource.
+  # Otherwise, 'prometheus.io' annotations are added to the cert-manager and
+  # cert-manager-webhook Deployments.
+  # Note that you can not enable both PodMonitor and ServiceMonitor as they are
+  # mutually exclusive. Enabling both will result in an error.
+  enabled: true
+
+  servicemonitor:
+    # Create a ServiceMonitor to add cert-manager to Prometheus.
+    enabled: true
+  podmonitor:
+    # Create a PodMonitor to add cert-manager to Prometheus.
+    enabled: false 
