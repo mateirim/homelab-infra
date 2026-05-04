@@ -1,0 +1,41 @@
+name: "Bug Report"
+description: "Report a bug to help us improve homelab-infra"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "A clear and concise description of what the bug is."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Describe the steps needed to reproduce the issue."
+      placeholder: |
+        1. Run `./setup.sh`
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment Information"
+      description: "Provide details about your environment (OS, K8s version, Node count)."
+      placeholder: |
+        - OS: Ubuntu 22.04
+        - K8s: v1.29.0
+        - Hardware: 3x RPi 4, 1x x86 Master
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Relevant Logs"
+      description: "Please provide relevant logs (e.g., from `setup-validation.sh` or `kubectl logs`)."
