@@ -25,7 +25,7 @@ class profile::k8s_worker (
   # CRI socket path
   String $cri_socket   = lookup('profile::k8s_worker::cri_socket',   String, 'first', 'unix:///var/run/containerd/containerd.sock'),
   # Cluster API endpoint (control-plane LB / DNS)
-  String $api_endpoint = lookup('profile::k8s_worker::api_endpoint', String, 'first', 'kube.homelab.local:6443'),
+  String $api_endpoint = lookup('profile::k8s_worker::api_endpoint', String, 'first', 'kube.REPLACE_WITH_YOUR_DOMAIN:6443'),
   # Pod CIDR  (must match kubeadm ClusterConfiguration + Cilium)
   String $pod_cidr     = lookup('profile::k8s_worker::pod_cidr',     String, 'first', '10.200.0.0/16'),
 ) {

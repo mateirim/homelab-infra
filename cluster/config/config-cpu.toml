@@ -147,14 +147,14 @@ version = 2
       [plugins."io.containerd.grpc.v1.cri".registry.auths]
 
       [plugins."io.containerd.grpc.v1.cri".registry.configs]
-            [plugins."io.containerd.grpc.v1.cri".registry.configs."registry.homelab.local".tls]
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."registry.REPLACE_WITH_YOUR_DOMAIN".tls]
                insecure_skip_verify = true
 
       [plugins."io.containerd.grpc.v1.cri".registry.headers]
 
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry.homelab.local"]
-                endpoint = ["http://registry.homelab.local"]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry.REPLACE_WITH_YOUR_DOMAIN"]
+                endpoint = ["http://registry.REPLACE_WITH_YOUR_DOMAIN"]
 
     [plugins."io.containerd.grpc.v1.cri".x509_key_pair_streaming]
       tls_cert_file = ""

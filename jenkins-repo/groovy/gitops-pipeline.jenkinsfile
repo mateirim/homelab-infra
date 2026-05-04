@@ -164,7 +164,7 @@ pipeline {
                         )]) {
                             sh """
                                 git config user.name "Jenkins CI"
-                                git config user.email "jenkins@example.com"
+                                git config user.email "jenkins@REPLACE_WITH_YOUR_DOMAIN"
                                 
                                 git add ${MANIFEST_PATH}/${params.ENVIRONMENT}/
                                 
@@ -246,7 +246,7 @@ Please review and approve this deployment." \
                         fi
                         
                         # Login to ArgoCD
-                        \${ARGOCD_CMD} login argocd.example.com \
+                        \${ARGOCD_CMD} login argocd.REPLACE_WITH_YOUR_DOMAIN \
                             --username admin \
                             --password \${ARGOCD_PASSWORD} \
                             --grpc-web
@@ -267,7 +267,7 @@ Please review and approve this deployment." \
                     //     sh """
                     //         curl -X POST \
                     //             -H "Authorization: Bearer \${ARGOCD_TOKEN}" \
-                    //             https://argocd.example.com/api/v1/applications/${params.ARGOCD_APP}-${params.ENVIRONMENT}/sync
+                    //             https://argocd.REPLACE_WITH_YOUR_DOMAIN/api/v1/applications/${params.ARGOCD_APP}-${params.ENVIRONMENT}/sync
                     //     """
                     // }
                 }
@@ -304,7 +304,7 @@ Please review and approve this deployment." \
                 sh """
                     # Add smoke tests here
                     echo "Checking application health..."
-                    # curl -f https://myapp-${params.ENVIRONMENT}.example.com/health
+                    # curl -f https://myapp-${params.ENVIRONMENT}.REPLACE_WITH_YOUR_DOMAIN/health
                 """
             }
         }

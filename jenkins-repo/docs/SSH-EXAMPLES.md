@@ -93,7 +93,7 @@ sudo chown deploy:deploy /opt/app
 1. **Create Pipeline Job**
 2. **Script Path**: `pipelines/ssh-deployment-yaml.yaml`
 3. **Set Parameters**:
-   - REMOTE_HOST: production-server.example.com
+   - REMOTE_HOST: production-server.REPLACE_WITH_YOUR_DOMAIN
    - REMOTE_USER: deploy
    - DEPLOY_PATH: /opt/myapp
    - ENVIRONMENT: production

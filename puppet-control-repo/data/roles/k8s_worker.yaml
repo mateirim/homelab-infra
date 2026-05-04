@@ -16,7 +16,7 @@ profile::k8s_worker::ctr_pkg_ver: '1.7*'
 profile::k8s_worker::cri_socket: 'unix:///var/run/containerd/containerd.sock'
 
 # Cluster API endpoint (control-plane LB / DNS)
-profile::k8s_worker::api_endpoint: 'kube.homelab.local:6443'
+profile::k8s_worker::api_endpoint: 'kube.REPLACE_WITH_YOUR_DOMAIN:6443'
 
 # Pod subnet — must match kubeadm ClusterConfiguration + Cilium IPAM
 profile::k8s_worker::pod_cidr: '10.200.0.0/16'

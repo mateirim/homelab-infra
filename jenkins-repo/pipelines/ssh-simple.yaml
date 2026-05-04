@@ -4,7 +4,7 @@ pipeline:
     any:
   
   parameters:
-    - "string(name: 'SERVER', defaultValue: 'YOUR_NODE.homelab.local', description: 'Remote server')"
+    - "string(name: 'SERVER', defaultValue: 'YOUR_NODE.REPLACE_WITH_YOUR_DOMAIN', description: 'Remote server')"
   
   stages:
     - stage: "SSH Hello World"

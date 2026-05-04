@@ -166,6 +166,7 @@ echo -e "  ${GREEN}✓${NC} .sops.yaml"
 echo -e "${GREEN}Applying replacements...${NC}"
 
 replace_in_files "homelab.local" "$DOMAIN"
+replace_in_files "example.com" "$DOMAIN"
 replace_in_files "OWNER_NAME" "$OWNER_NAME"
 replace_in_files "192.168.1.10" "$CP_IP"
 replace_in_files "192.168.1.1" "$GATEWAY_IP"

@@ -3179,7 +3179,7 @@ nginx:
     # -- Annotations for the nginx route
     annotations: {}
     # -- Hostname configuration
-    host: nginx.mimir.example.com
+    host: nginx.mimir.REPLACE_WITH_YOUR_DOMAIN
     # -- TLS configuration for OpenShift Route
     tls:
       # -- More details about TLS configuration and termination types: https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html#secured-routes
@@ -3247,11 +3247,11 @@ ingress:
     compactor:
       - path: /api/v1/upload/block/
   hosts:
-    - mimir.example.com
+    - mimir.REPLACE_WITH_YOUR_DOMAIN
   # tls:
   #   - secretName: mimir-distributed-tls
   #     hosts:
-  #       - mimir.example.com
+  #       - mimir.REPLACE_WITH_YOUR_DOMAIN
 
 # -- A reverse proxy deployment that is meant to receive traffic for Mimir or GEM.
 # When enterprise.enabled is true the GEM gateway is deployed. Otherwise, it is an nginx.
@@ -3411,7 +3411,7 @@ gateway:
     # -- Hosts configuration for the Ingress
     hosts:
       # -- Passed through the `tpl` function to allow templating.
-      - host: "{{ .Release.Name }}.mimir.example.com"
+      - host: "{{ .Release.Name }}.mimir.REPLACE_WITH_YOUR_DOMAIN"
         paths:
           - path: /
             # -- pathType (e.g. ImplementationSpecific, Prefix, .. etc.) might also be required by some Ingress Controllers
@@ -3421,7 +3421,7 @@ gateway:
       - secretName: mimir-tls
         # --  Hosts included in the tls certificate. Passed through the `tpl` function to allow templating.
         hosts:
-          - "{{ .Release.Name }}.mimir.example.com"
+          - "{{ .Release.Name }}.mimir.REPLACE_WITH_YOUR_DOMAIN"
 
   # -- OpenShift Route configuration
   route:
@@ -3429,7 +3429,7 @@ gateway:
     # -- Annotations for the Route
     annotations: {}
     # -- Passed through the `tpl` function to allow templating.
-    host: "{{ .Release.Name }}.mimir.example.com"
+    host: "{{ .Release.Name }}.mimir.REPLACE_WITH_YOUR_DOMAIN"
 
     tls:
       # -- More details about TLS configuration and termination types: https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html#secured-routes

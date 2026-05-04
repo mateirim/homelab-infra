@@ -124,7 +124,7 @@ kubectl get pods -n myapp-dev
 kubectl rollout status deployment/myapp -n myapp-dev
 
 # Run smoke tests
-curl https://myapp-dev.example.com/health
+curl https://myapp-dev.REPLACE_WITH_YOUR_DOMAIN/health
 ```
 
 ## Environment Promotion Strategy

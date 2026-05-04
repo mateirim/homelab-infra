@@ -2,7 +2,7 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: registry.example.com
+domain: registry.REPLACE_WITH_YOUR_DOMAIN
 layout:
 - go.kubebuilder.io/v4
 plugins:
@@ -15,7 +15,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: registry.example.com
+  domain: registry.REPLACE_WITH_YOUR_DOMAIN
   group: sync
   kind: SecretSync
   path: github.com/homelab/homelab-operator/api/v1alpha1

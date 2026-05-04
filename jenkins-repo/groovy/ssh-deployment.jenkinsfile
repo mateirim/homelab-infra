@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        REMOTE_HOST = 'production-server.example.com'
+        REMOTE_HOST = 'production-server.REPLACE_WITH_YOUR_DOMAIN'
         REMOTE_USER = 'deploy'
         DEPLOY_PATH = '/opt/applications/myapp'
         APP_NAME = 'myapp'

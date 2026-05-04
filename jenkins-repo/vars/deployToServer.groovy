@@ -4,7 +4,7 @@
  * Shared library function for SSH deployment
  * Usage in Jenkinsfile:
  *   deployToServer(
- *       host: 'server.example.com',
+ *       host: 'server.REPLACE_WITH_YOUR_DOMAIN',
  *       user: 'deploy',
  *       credentialsId: 'ssh-key',
  *       sourcePath: 'dist/*',
