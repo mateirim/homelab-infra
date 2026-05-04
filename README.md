@@ -28,6 +28,7 @@ A **comprehensive multi-arch homelab GitOps repository**: featuring 3-stage kube
 | [START_HERE.md](START_HERE.md) | First-time setup overview (5 min) |
 | [GETTING_STARTED.md](GETTING_STARTED.md) | Step-by-step deployment guide with troubleshooting |
 | [HARDWARE.md](HARDWARE.md) | Node sizing, degradation scenarios, resource planning |
+| [SECURITY.md](SECURITY.md) | Vulnerability reporting and security posture |
 | [LICENSES.md](LICENSES.md) | License attribution for all third-party projects |
 | **🏗️ Architecture** | |
 | [cluster/docs/HELM-CHARTS.md](cluster/docs/HELM-CHARTS.md) | All Helm charts with sources and versions |
@@ -37,9 +38,10 @@ A **comprehensive multi-arch homelab GitOps repository**: featuring 3-stage kube
 | [helm-charts/](helm-charts/) | Custom Helm charts and Dockerfiles |
 | [jenkins-repo/](jenkins-repo/) | Jenkins pipelines and shared libraries |
 | [puppet-control-repo/](puppet-control-repo/) | Puppet roles, profiles, and Hiera data |
-| **🚀 Quick Links** | |
+| **🚀 Tools & Community** | |
 | [Setup Script](setup.sh) | Interactive personalization wizard |
 | [Validation Script](setup-validation.sh) | Verify configuration before deployment |
+| [.github/](.github/) | Issue templates, PR guidelines, and CI workflows |
 | [LICENSE](LICENSE) | MIT License |
 
 ## Quick Start
