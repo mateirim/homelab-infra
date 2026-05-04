@@ -6,9 +6,9 @@ Thank you for your interest in contributing! This guide explains how to fork, mo
 
 1. **Fork** the repository on GitHub
 2. **Clone** your fork locally
-3. **Run `./setup.sh`** to personalize for your environment
+3. **Run `../setup.sh`** to personalize for your environment
 4. **Make changes** (add features, fix bugs, improve docs)
-5. **Test** with `./setup-validation.sh`
+5. **Test** with `../setup-validation.sh`
 6. **Commit** with descriptive messages
 7. **Push** to your fork
 8. **Create a PR** with a clear description of changes
@@ -258,8 +258,8 @@ find cluster/ -name "*.yaml" -o -name "*.yml" | xargs -I {} sh -c 'echo "Validat
 
 ```bash
 # Check that setup works and validates correctly
-./setup.sh  # Answer prompts to personalize for your environment
-./setup-validation.sh
+../setup.sh  # Answer prompts to personalize for your environment
+../setup-validation.sh
 ```
 
 If both pass:
@@ -343,14 +343,14 @@ If you add a new secret file:
    sops --encrypt --in-place cluster/infrastructure/my-app/secret.yaml
    ```
 
-   This requires `.sops.yaml` to be configured (run `./setup.sh` first).
+   This requires `.sops.yaml` to be configured (run `../setup.sh` first).
 
 3. **Commit the encrypted file:**
    ```bash
    git add cluster/infrastructure/my-app/secret.yaml
    ```
 
-For more details, see [cluster/docs/SECRETS-ROTATION.md](cluster/docs/SECRETS-ROTATION.md).
+For more details, see [../cluster/docs/SECRETS-ROTATION.md](../cluster/docs/SECRETS-ROTATION.md).
 
 ---
 
@@ -366,7 +366,7 @@ For more details, see [cluster/docs/SECRETS-ROTATION.md](cluster/docs/SECRETS-RO
 
 2. **Run validation:**
    ```bash
-   ./setup-validation.sh
+   ../setup-validation.sh
    ```
 
 3. **Check your changes:**
@@ -402,7 +402,7 @@ For more details, see [cluster/docs/SECRETS-ROTATION.md](cluster/docs/SECRETS-RO
 
    ## Testing
    - Validated YAML with `kubectl apply --dry-run`
-   - Ran ./setup-validation.sh successfully
+   - Ran ../setup-validation.sh successfully
    - Tested restore procedure in test cluster
 
    ## Related Issues

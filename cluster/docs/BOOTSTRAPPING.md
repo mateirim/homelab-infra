@@ -461,10 +461,10 @@ cat .sops.yaml | grep pgp
 
 ## Next Steps
 
-- Read [GETTING_STARTED.md](../GETTING_STARTED.md) for detailed step-by-step deployment
-- Read [HARDWARE.md](../HARDWARE.md) for node sizing recommendations
+- Read [docs/GETTING_STARTED.md](../docs/GETTING_STARTED.md) for detailed step-by-step deployment
+- Read [docs/HARDWARE.md](../docs/HARDWARE.md) for node sizing recommendations
 - Check [README.md](../README.md) for architecture overview
-- See [CONTRIBUTING.md](../CONTRIBUTING.md) if you want to contribute changes back
+- See [docs/CONTRIBUTING.md](../docs/CONTRIBUTING.md) if you want to contribute changes back
 
 ---
 

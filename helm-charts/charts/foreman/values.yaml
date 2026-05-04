@@ -6,7 +6,7 @@
 # Description: Puppet infrastructure reporting and analytics platform
 # Foreman Source: https://github.com/theforeman/foreman (GPL 3.0)
 # Docker Image: https://github.com/lu1as/docker-foreman (Custom Dockerization)
-# License: GPL 3.0 (See ../../LICENSE and ../../LICENSES.md for details)
+# License: GPL 3.0 (See ../../LICENSE and ../../docs/LICENSES.md for details)
 # Attribution: Custom Helm chart for homelab-infra, based on:
 #   - Foreman project (theforeman/foreman)
 #   - Docker Foreman image (lu1as/docker-foreman)

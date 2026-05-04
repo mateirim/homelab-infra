@@ -10,7 +10,7 @@
 
 A **comprehensive multi-arch homelab GitOps repository**: featuring 3-stage kubeadm deployment, Cilium eBPF networking, ArgoCD sync, SOPS secrets, and Puppet configuration management for 30+ applications.
 
-> 🚀 **Quick Start**: Clone → Run `./setup.sh` → Run `./setup-validation.sh` → `git push` → Deploy stages 1-3 with `kubectl apply`. ~1 hour end-to-end. See [GETTING_STARTED.md](GETTING_STARTED.md) for details.
+> 🚀 **Quick Start**: Clone → Run `./setup.sh` → Run `./setup-validation.sh` → `git push` → Deploy stages 1-3 with `kubectl apply`. ~1 hour end-to-end. See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for details.
 
 ## Features
 
@@ -25,11 +25,11 @@ A **comprehensive multi-arch homelab GitOps repository**: featuring 3-stage kube
 | Section | Purpose |
 | --- | --- |
 | **📖 Documentation** | |
-| [START_HERE.md](START_HERE.md) | First-time setup overview (5 min) |
-| [GETTING_STARTED.md](GETTING_STARTED.md) | Step-by-step deployment guide with troubleshooting |
-| [HARDWARE.md](HARDWARE.md) | Node sizing, degradation scenarios, resource planning |
-| [SECURITY.md](SECURITY.md) | Vulnerability reporting and security posture |
-| [LICENSES.md](LICENSES.md) | License attribution for all third-party projects |
+| [docs/START_HERE.md](docs/START_HERE.md) | First-time setup overview (5 min) |
+| [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | Step-by-step deployment guide with troubleshooting |
+| [docs/HARDWARE.md](docs/HARDWARE.md) | Node sizing, degradation scenarios, resource planning |
+| [docs/SECURITY.md](docs/SECURITY.md) | Vulnerability reporting and security posture |
+| [docs/LICENSES.md](docs/LICENSES.md) | License attribution for all third-party projects |
 | **🏗️ Architecture** | |
 | [cluster/docs/HELM-CHARTS.md](cluster/docs/HELM-CHARTS.md) | All Helm charts with sources and versions |
 | [cluster/docs/](cluster/docs/) | Architecture diagrams and reference docs |
@@ -46,9 +46,9 @@ A **comprehensive multi-arch homelab GitOps repository**: featuring 3-stage kube
 
 ## Quick Start
 
-**Just cloned?** → Read [START_HERE.md](START_HERE.md) (5 min)
+**Just cloned?** → Read [docs/START_HERE.md](docs/START_HERE.md) (5 min)
 
-**Ready to deploy?** → Follow [GETTING_STARTED.md](GETTING_STARTED.md) for step-by-step instructions
+**Ready to deploy?** → Follow [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for step-by-step instructions
 
 Access applications at `https://argo.yourdomain.com`, `https://grafana.yourdomain.com`, etc.
 
@@ -211,7 +211,7 @@ homelab-infra/
 - Workers: 4-6GB each
 - GPU node (optional): NVIDIA GPU for Ollama/LiteLLM inference
 
-**See [HARDWARE.md](HARDWARE.md)** for:
+**See [docs/HARDWARE.md](docs/HARDWARE.md)** for:
 
 - Detailed minimum/recommended specs
 - Degradation scenarios (what works with 3-4 nodes)
@@ -238,7 +238,7 @@ Docker images built multi-arch (amd64 + arm64) via buildx automatically.
 
 **Key Guides:**
 
-- [LICENSES.md](LICENSES.md) — License attribution for all third-party projects
+- [docs/LICENSES.md](docs/LICENSES.md) — License attribution for all third-party projects
 - [cluster/docs/HELM-CHARTS.md](cluster/docs/HELM-CHARTS.md) — Helm charts with sources and license info
 - [cluster/docs/](cluster/docs/) — Architecture diagrams and reference documentation
 
@@ -278,7 +278,7 @@ This is a **template meant to be forked and customized**. Found a bug or have im
 
 **This repository:** [MIT License](LICENSE) — You can use, modify, and distribute freely.
 
-**Third-party software:** See [LICENSES.md](LICENSES.md) for comprehensive attribution of 30+ open-source projects, including:
+**Third-party software:** See [docs/LICENSES.md](docs/LICENSES.md) for comprehensive attribution of 30+ open-source projects, including:
 
 - Apache 2.0, MIT, BSD (permissive — no restrictions)
 - AGPL 3.0 (Grafana, Loki, Mimir, SearXNG — see compliance notes)

@@ -2,7 +2,7 @@
 
 This guide walks you through personalizing the template and deploying your Kubernetes cluster.
 
-> **First time?** Check [HARDWARE.md](HARDWARE.md) to ensure your nodes meet minimum requirements. See [README.md](README.md) for a quick overview.
+> **First time?** Check [HARDWARE.md](HARDWARE.md) to ensure your nodes meet minimum requirements. See [../README.md](README.md) for a quick overview.
 
 ## Prerequisites Checklist
 
@@ -25,7 +25,7 @@ If you're missing any of these, stop here and set them up first. The setup scrip
 Run the setup wizard:
 
 ```bash
-./setup.sh
+../setup.sh
 ```
 
 You'll be prompted for:
@@ -58,7 +58,7 @@ Before running `setup.sh`, you can preview the expected SOPS configuration by re
 Run the validation script:
 
 ```bash
-./setup-validation.sh
+../setup-validation.sh
 ```
 
 **Expected output:**
@@ -80,7 +80,7 @@ Run the validation script:
 ```
 
 If any checks fail:
-- **Placeholders remain** — Re-run `./setup.sh` and check its output
+- **Placeholders remain** — Re-run `../setup.sh` and check its output
 - **GPG key not found** — Ensure your GPG key is in your local keyring: `gpg --list-keys YOUR_KEY_ID`
 - **SOPS encryption failed** — Check that your GPG key is accessible and not password-protected (or use `gpg-agent`)
 
@@ -359,11 +359,11 @@ Once deployed:
 
 ## Questions?
 
-- **Setup failed?** — Check output of `./setup-validation.sh`
+- **Setup failed?** — Check output of `../setup-validation.sh`
 - **Pod stuck?** — Check `kubectl describe pod <pod>` and `kubectl logs <pod>`
 - **Secrets broken?** — Verify GPG key with `gpg --list-keys`
 - **Found a bug?** — Open a GitHub Issue at https://github.com/mateirim/homelab-infra/issues
 
 ---
 
-**Ready?** Run `./setup.sh` and follow the prompts. Good luck! 🚀
+**Ready?** Run `../setup.sh` and follow the prompts. Good luck! 🚀

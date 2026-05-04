@@ -12,7 +12,7 @@ A production-ready Kubernetes cluster template: 28 namespaces, 30+ applications,
 → Continue below (this is you)
 
 **Path 2: Want to Understand the Architecture First?**
-→ Read [README.md](README.md) (15 min)
+→ Read [../README.md](README.md) (15 min)
 
 ---
 
@@ -38,7 +38,7 @@ Do you have:
 ### 1. Personalize (5 min)
 
 ```bash
-./setup.sh
+../setup.sh
 ```
 
 You'll be prompted for:
@@ -56,7 +56,7 @@ The script will:
 ### 2. Validate (1 min)
 
 ```bash
-./setup-validation.sh
+../setup-validation.sh
 ```
 
 This checks:
@@ -85,13 +85,13 @@ Then follow [GETTING_STARTED.md](GETTING_STARTED.md) **Step 2 onwards** which wa
 In this order:
 
 1. **[GETTING_STARTED.md](GETTING_STARTED.md)** — Step-by-step deployment guide
-2. **[cluster/README.md](cluster/README.md)** — Node setup and Kubernetes bootstrap
+2. **[../cluster/README.md](cluster/README.md)** — Node setup and Kubernetes bootstrap
 
 ---
 
 ## Questions?
 
-- **"What's inside?"** → [README.md](README.md)
+- **"What's inside?"** → [../README.md](README.md)
 - **"What do I need?"** → [GETTING_STARTED.md](GETTING_STARTED.md) Prerequisites section
 - **"How do I deploy?"** → [GETTING_STARTED.md](GETTING_STARTED.md)
 - **"What if something breaks?"** → [GETTING_STARTED.md](GETTING_STARTED.md#troubleshooting)
@@ -99,4 +99,4 @@ In this order:
 
 ---
 
-**Ready?** Run `./setup.sh` and proceed. Good luck! 🎯
+**Ready?** Run `../setup.sh` and proceed. Good luck! 🎯

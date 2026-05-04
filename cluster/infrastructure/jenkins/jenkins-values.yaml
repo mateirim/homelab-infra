@@ -1259,7 +1259,7 @@ awsSecurityGroupPolicies:
       securityGroupIds: []
       podSelector: {}
 
-# Here you can configure unit tests values when executing the helm unittest in the CONTRIBUTING.md
+# Here you can configure unit tests values when executing the helm unittest in the docs/CONTRIBUTING.md
 # helmtest:
   # A testing framework for bash
   # bats:

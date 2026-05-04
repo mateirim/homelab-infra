@@ -443,4 +443,4 @@ kubectl exec -it -n database <postgres-pod> -- iostat -x 1
 
 ---
 
-See [GETTING_STARTED.md](GETTING_STARTED.md) for deployment instructions and [cluster/docs/](cluster/docs/) for deeper architecture details.
+See [GETTING_STARTED.md](GETTING_STARTED.md) for deployment instructions and [../cluster/docs/](../cluster/docs/) for deeper architecture details.

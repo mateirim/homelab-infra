@@ -2,7 +2,7 @@
 
 This document lists all **external** Helm charts deployed in the homelab-infra cluster with their repository URLs, versions, and source projects.
 
-**License & Attribution:** See [LICENSES.md](../../LICENSES.md) for full license information and attribution for all third-party projects.
+**License & Attribution:** See [docs/LICENSES.md](../../docs/LICENSES.md) for full license information and attribution for all third-party projects.
 
 For **custom/local** charts, see [helm-charts/charts/](../../helm-charts/charts/).
 
@@ -39,17 +39,17 @@ For **custom/local** charts, see [helm-charts/charts/](../../helm-charts/charts/
 - **grafana** (^7.0+)
   - Helm Repo: https://grafana.github.io/helm-charts
   - Source: [Grafana](https://github.com/grafana/helm-charts) (AGPL 3.0)
-  - ⚠️ Note: AGPL 3.0 - See [LICENSES.md](../../LICENSES.md) for compliance info
+  - ⚠️ Note: AGPL 3.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance info
 
 - **loki** (^6.0+)
   - Helm Repo: https://grafana.github.io/helm-charts
   - Source: [Loki](https://github.com/grafana/loki) (AGPL 3.0)
-  - ⚠️ Note: AGPL 3.0 - See [LICENSES.md](../../LICENSES.md) for compliance info
+  - ⚠️ Note: AGPL 3.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance info
 
 - **mimir** (^5.0+)
   - Helm Repo: https://grafana.github.io/helm-charts
   - Source: [Mimir](https://github.com/grafana/mimir) (AGPL 3.0)
-  - ⚠️ Note: AGPL 3.0 - See [LICENSES.md](../../LICENSES.md) for compliance info
+  - ⚠️ Note: AGPL 3.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance info
 
 - **alertmanager** (^1.0+)
   - Helm Repo: https://prometheus-community.github.io/helm-charts
@@ -77,12 +77,12 @@ For **custom/local** charts, see [helm-charts/charts/](../../helm-charts/charts/
 - **searxng** (^1.0.7)
   - Helm Repo: https://charts.kubito.dev
   - Source: [SearXNG](https://github.com/searxng/searxng) (AGPL 3.0)
-  - ⚠️ Note: AGPL 3.0 - See [LICENSES.md](../../LICENSES.md) for compliance info
+  - ⚠️ Note: AGPL 3.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance info
 
 - **n8n** (^2.0.1)
   - Helm Repo: oci://8gears.container-registry.com/library/n8n
   - Source: [n8n](https://github.com/n8n-io/n8n) (Elastic License 2.0)
-  - ⚠️ Note: Elastic License 2.0 - See [LICENSES.md](../../LICENSES.md) for usage terms
+  - ⚠️ Note: Elastic License 2.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for usage terms
 
 - **litellm-helm** (^0.1.2)
   - Helm Repo: oci://docker.litellm.ai/berriai/litellm-helm
@@ -146,7 +146,7 @@ Custom charts are maintained in [`helm-charts/charts/`](../../helm-charts/charts
   - Location: [helm-charts/charts/foreman/](../../helm-charts/charts/foreman/)
   - Based on [Foreman](https://github.com/theforeman/foreman) (GPL 3.0)
   - Docker image: [lu1as/docker-foreman](https://github.com/lu1as/docker-foreman)
-  - License: GPL 3.0 (See [LICENSES.md](../../LICENSES.md) for compliance details)
+  - License: GPL 3.0 (See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance details)
 
 ---
 
@@ -178,7 +178,7 @@ To add a new **external** chart:
        valueFiles:
          - $myRepo/infrastructure/<namespace>/<chart-name>-values.yaml
    ```
-4. **Update [LICENSES.md](../../LICENSES.md)** with the source project, license, and GitHub link
+4. **Update [docs/LICENSES.md](../../docs/LICENSES.md)** with the source project, license, and GitHub link
 5. **Update this file** with the new chart information
 6. **Commit and push**: ArgoCD will auto-sync
 
@@ -188,7 +188,7 @@ To create a **custom** chart:
 2. Follow standard Helm chart structure (`Chart.yaml`, `values.yaml`, `templates/`)
 3. Include `LICENSE` file in the chart directory
 4. Reference it in the appropriate namespace's `service.yaml` with `repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra`
-5. Update [LICENSES.md](../../LICENSES.md) with the chart details
+5. Update [docs/LICENSES.md](../../docs/LICENSES.md) with the chart details
 6. See [foreman chart](../../helm-charts/charts/foreman/) for an example
 
 ---
@@ -196,11 +196,11 @@ To create a **custom** chart:
 ## License Compliance
 
 - **AGPL 3.0 Components**: Grafana, Loki, Mimir, SearXNG require source code availability if modified
-- **Elastic License 2.0**: n8n has usage restrictions - see [LICENSES.md](../../LICENSES.md)
-- **GPL 3.0**: Foreman and Puppet - see [LICENSES.md](../../LICENSES.md)
+- **Elastic License 2.0**: n8n has usage restrictions - see [docs/LICENSES.md](../../docs/LICENSES.md)
+- **GPL 3.0**: Foreman and Puppet - see [docs/LICENSES.md](../../docs/LICENSES.md)
 - **Open Source**: All other components use permissive open-source licenses (MIT, Apache 2.0, BSD)
 
-For complete details, see [LICENSES.md](../../LICENSES.md).
+For complete details, see [docs/LICENSES.md](../../docs/LICENSES.md).
 
 ---
 
@@ -210,4 +210,4 @@ For complete details, see [LICENSES.md](../../LICENSES.md).
 - **Version Pinning**: Always use caret (`^`) or tilde (`~`) versioning for stability
 - **Custom Charts**: Charts in `helm-charts/charts/` are deployed from the git repo itself
 - **Chart Updates**: Keep chart repos updated with `helm repo update`
-- **License Compliance**: Review [LICENSES.md](../../LICENSES.md) before commercial deployment
+- **License Compliance**: Review [docs/LICENSES.md](../../docs/LICENSES.md) before commercial deployment
