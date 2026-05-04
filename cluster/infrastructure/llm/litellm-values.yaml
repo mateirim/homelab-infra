@@ -15,9 +15,9 @@ extraEnvVars:
   - name: STORE_MODEL_IN_DB
     value: "True"
   - name: UI_USERNAME
-    value: "admin"
+    value: REPLACE_WITH_LITELLM_UI_USERNAME
   - name: UI_PASSWORD
-    value: "homelab"
+    value: REPLACE_WITH_LITELLM_UI_PASSWORD
 
 
 
