@@ -19,6 +19,7 @@ A production-ready Kubernetes cluster template: 28 namespaces, 30+ applications,
 ## Deploying? Check Prerequisites (2 min)
 
 Do you have:
+
 - [ ] 5+ nodes (1 control plane + 4+ workers)
 - [ ] NFS server(s) for storage
 - [ ] Domain name (e.g., example.com)
@@ -38,16 +39,23 @@ Do you have:
 ### 1. Personalize (5 min)
 
 ```bash
-../setup.sh
+# Option A: interactive
+./setup.sh
+
+# Option B: non-interactive (recommended for re-runs)
+cp secrets.example secrets.env  # fill in your values
+./setup.py --config secrets.env
 ```
 
 You'll be prompted for:
+
 - Domain name
 - NFS server IPs
 - DNS servers
 - API tokens (GitHub, Cloudflare)
 
 The script will:
+
 - Fill in all `REPLACE_WITH_*` placeholders
 - Generate random passwords
 - Encrypt secrets with SOPS
@@ -60,6 +68,7 @@ The script will:
 ```
 
 This checks:
+
 - All placeholders filled
 - Secrets encrypted
 - No hardcoded values
@@ -73,6 +82,7 @@ git push
 ```
 
 Then follow [GETTING_STARTED.md](GETTING_STARTED.md) **Step 2 onwards** which walks you through:
+
 - Node setup (kernel tuning, containerd, kubeadm)
 - Control plane bootstrap
 - Cilium CNI deployment

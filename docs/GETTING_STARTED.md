@@ -25,7 +25,12 @@ If you're missing any of these, stop here and set them up first. The setup scrip
 Run the setup wizard:
 
 ```bash
-../setup.sh
+# Option A: interactive
+./setup.sh
+
+# Option B: non-interactive (recommended for re-runs)
+cp secrets.example secrets.env  # fill in your values, secrets.env is gitignored
+./setup.py --config secrets.env
 ```
 
 You'll be prompted for:

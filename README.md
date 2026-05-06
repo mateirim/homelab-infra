@@ -1,9 +1,5 @@
 # homelab-infra
 
-<div align="center">
-  <img src="docs/logo_white_resized.png" alt="homelab-infra" />
-</div>
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-1.22%2B-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io)
 [![Architecture](https://img.shields.io/badge/Architecture-amd64%2Barm64-blue)](https://github.com/mateirim/homelab-infra)
@@ -11,14 +7,6 @@
 A **comprehensive multi-arch homelab GitOps repository**: featuring 3-stage kubeadm deployment, Cilium eBPF networking, ArgoCD sync, SOPS secrets, and Puppet configuration management for 30+ applications.
 
 > 🚀 **Quick Start**: Clone → Run `./setup.sh` → Run `./setup-validation.sh` → `git push` → Deploy stages 1-3 with `kubectl apply`. ~1 hour end-to-end. See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for details.
-
-## Features
-
-| ![SOPS](docs/icon_sops_white_1777910922729.png) | ![Apps](docs/icon_apps_white_1777910937232.png) | ![GitOps](docs/icon_gitops_white_1777910959625.png) |
-|:---:|:---:|:---:|
-| **SOPS Encryption** | **30+ Apps** | **GitOps** |
-| ![Monitoring](docs/icon_monitoring_white_1777910971659.png) | ![Storage](docs/icon_storage_white_1777910984425.png) | ![CNI](docs/icon_cni_white_1777910996089.png) |
-| **Full Monitoring** | **NFS Storage** | **Cilium CNI** |
 
 ## Table of Contents
 
@@ -55,6 +43,7 @@ Access applications at `https://argo.yourdomain.com`, `https://grafana.yourdomai
 ## What's Inside
 
 **Repository Stats:**
+
 - 29 infrastructure namespaces (organized, modular)
 - 30+ applications (databases, monitoring, LLM, CI/CD, storage, identity, etc.)
 - 159 YAML manifests (Helm values, Kustomize, ArgoCD Applications)
@@ -64,9 +53,16 @@ Access applications at `https://argo.yourdomain.com`, `https://grafana.yourdomai
 - 8 NetworkPolicies (database, Jenkins, ArgoCD access control)
 - 26 RBAC roles (least-privilege per namespace)
 
-**Architecture Diagram:**
+**Architecture:**
 
-![Architecture Diagram](docs/arch_diagram_1777910362644.png)
+```mermaid
+graph LR
+    GitHub -->|GitOps| ArgoCD
+    ArgoCD --> Stage1["Stage 1\nCilium · NFS · ArgoCD"]
+    ArgoCD --> Stage2["Stage 2\nnginx · cert-manager · DBs · VPN"]
+    ArgoCD --> Stage3["Stage 3\nLLM · HA · Keycloak · Jenkins · Grafana"]
+    Stage1 --> Stage2 --> Stage3
+```
 
 **System Architecture (Mind Map):**
 
@@ -221,6 +217,7 @@ homelab-infra/
 ## Multi-Architecture
 
 Supports amd64 and arm64:
+
 - Raspberry Pi 4/5 (arm64) works as worker
 - x86 mini-PCs as control plane
 - Mixed clusters (some Pi, some x86)
@@ -247,14 +244,17 @@ Docker images built multi-arch (amd64 + arm64) via buildx automatically.
 Cluster bootstraps in 3 ordered stages (via ArgoCD Applications):
 
 **Stage 1 (Foundation)** — 5-10 min
+
 - Cilium CNI (required before any workloads)
 - Namespaces, NFS provisioner, Prometheus CRDs, ArgoCD
 
 **Stage 2 (Infrastructure)** — 10-20 min
+
 - Databases (PostgreSQL, MongoDB, Redis HA), TLS (cert-manager), reverse proxy (nginx), DNS (Pi-hole), container registry, runners, VPN
 - Waiting point: ensure all LoadBalancers get IPs from Cilium IPAM pool before proceeding
 
 **Stage 3 (Applications)** — 20-30 min
+
 - Applications: Nextcloud, Jenkins, Keycloak, LLM stack, Home Assistant, Grafana, Puppet, Foreman, etc.
 
 Skip a stage at your own risk — dependencies will fail.
@@ -262,6 +262,7 @@ Skip a stage at your own risk — dependencies will fail.
 ## Network Security
 
 **Explicit NetworkPolicies** — Applied to sensitive workloads via [cluster/infrastructure/networkpolicies/](cluster/infrastructure/networkpolicies/):
+
 - **Database Access** — Only Jenkins, ArgoCD, and application namespaces can access PostgreSQL, MongoDB, Redis
 - **Jenkins Isolation** — Limited ingress (from proxy + runners), controlled egress (DNS, K8s API, databases, external repos)
 - **ArgoCD Access** — Controlled ingress from proxy, egress to K8s API and Git repositories

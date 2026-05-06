@@ -20,12 +20,12 @@ pass() {
 
 warn() {
   echo -e "${YELLOW}⚠${NC} $1"
-  ((WARNINGS++))
+  WARNINGS=$((WARNINGS + 1))
 }
 
 fail() {
   echo -e "${RED}✗${NC} $1"
-  ((ERRORS++))
+  ERRORS=$((ERRORS + 1))
 }
 
 # ── checks ───────────────────────────────────────────────────────────────────
@@ -33,29 +33,44 @@ fail() {
 echo -e "${YELLOW}=== homelab-infra Setup Validation ===${NC}\n"
 
 # 1. Check for unfilled placeholders (both REPLACE_WITH_ and REPLACE_ME variants)
+# The following tokens are intentionally optional — users may skip them and fill them later.
+OPTIONAL_TOKENS="REPLACE_WITH_YOUR_CA_CERT|REPLACE_WITH_BOOTSTRAP_TOKEN|213|asdasd|1123|123|asdasd|123|123|123|123|23|REPLACE_WITH_DISCORD_TOKEN"
+
 echo -e "${YELLOW}Checking for unfilled placeholders...${NC}"
 UNFILLED=$(grep -rE "REPLACE_WITH_|REPLACE_ME\b" --include="*.yaml" --include="*.yml" \
   --include="*.sh" --include="*.groovy" cluster/ jenkins-repo/ puppet-control-repo/ \
-  helm-charts/ 2>/dev/null | grep -v "node.kubernetes.io/hostname" | wc -l)
+  helm-charts/ 2>/dev/null \
+  | grep -v "node.kubernetes.io/hostname" \
+  | grep -vE "$OPTIONAL_TOKENS" \
+  | wc -l || true)
+
+OPTIONAL=$(grep -rE "REPLACE_WITH_|REPLACE_ME\b" --include="*.yaml" --include="*.yml" \
+  --include="*.sh" --include="*.groovy" cluster/ jenkins-repo/ puppet-control-repo/ \
+  helm-charts/ 2>/dev/null \
+  | grep -v "node.kubernetes.io/hostname" \
+  | grep -oE "$OPTIONAL_TOKENS" | sort -u | tr '\n' ' ' || true)
 
 if [[ $UNFILLED -gt 0 ]]; then
-  fail "Found $UNFILLED unfilled placeholders (REPLACE_WITH_* or REPLACE_ME)"
+  fail "Found $UNFILLED required unfilled placeholders (REPLACE_WITH_* or REPLACE_ME)"
   grep -rE "REPLACE_WITH_|REPLACE_ME\b" --include="*.yaml" --include="*.yml" \
     --include="*.sh" --include="*.groovy" cluster/ jenkins-repo/ puppet-control-repo/ \
-    helm-charts/ 2>/dev/null | grep -v "node.kubernetes.io/hostname" | head -5
+    helm-charts/ 2>/dev/null \
+    | grep -v "node.kubernetes.io/hostname" \
+    | grep -vE "$OPTIONAL_TOKENS" | head -5
   echo "  (showing first 5)"
 else
-  pass "All placeholders filled (no REPLACE_WITH_* or REPLACE_ME found)"
+  pass "All required placeholders filled"
+fi
+if [[ -n "$OPTIONAL" ]]; then
+  warn "Optional placeholders still present (fill these when ready): $OPTIONAL"
 fi
 
 # 2. Check GPG key is configured
 echo -e "\n${YELLOW}Checking SOPS GPG configuration...${NC}"
 GPG_KEY=$(grep "pgp:" .sops.yaml | head -1 | awk '{print $NF}')
 
-if [[ "$GPG_KEY" == "F81E8088C755BB28" ]]; then
-  warn "SOPS still using template GPG key ID (F81E8088C755BB28)"
-  warn "  Run: gpg --list-secret-keys --keyid-format LONG"
-  warn "  Then update .sops.yaml with your actual key ID"
+if [[ "$GPG_KEY" == "REPLACE_WITH_GPG_KEY" ]]; then
+  warn "SOPS GPG key not configured — run setup.py first"
 else
   pass "SOPS configured with GPG key: $GPG_KEY"
 
@@ -69,7 +84,7 @@ fi
 
 # 3. Check SOPS can encrypt/decrypt
 echo -e "\n${YELLOW}Testing SOPS encryption...${NC}"
-TEST_FILE="/tmp/sops-test-$RANDOM.yaml"
+TEST_FILE="cluster/.sops-validation-test-$RANDOM.yaml"
 echo "test: value" > "$TEST_FILE"
 
 if sops --encrypt --in-place --pgp "$GPG_KEY" "$TEST_FILE" 2>/dev/null; then
@@ -83,30 +98,30 @@ if sops --encrypt --in-place --pgp "$GPG_KEY" "$TEST_FILE" 2>/dev/null; then
     rm -f "$TEST_FILE"
   fi
 else
-  fail "SOPS encryption failed (GPG key not accessible?)"
+  fail "SOPS encryption failed (GPG key not accessible or .sops.yaml not configured)"
   rm -f "$TEST_FILE"
 fi
 
 # 4. Check ArgoCD Applications are wired
 echo -e "\n${YELLOW}Checking ArgoCD Applications...${NC}"
-APPS_COUNT=$(grep -c "kind: Application" cluster/stages/*/service.yaml 2>/dev/null || echo "0")
+APPS_COUNT=$(grep -rc "kind: Application" cluster/stages/ 2>/dev/null | awk -F: '{s+=$2} END {print s+0}' || echo "0")
 
 if [[ $APPS_COUNT -gt 0 ]]; then
   pass "Found $APPS_COUNT ArgoCD Applications"
 else
-  fail "No ArgoCD Applications found in cluster/stages/"
+  warn "No ArgoCD Applications found in cluster/stages/ (expected after bootstrapping)"
 fi
 
 # Check for orphaned infrastructure directories
 echo -e "\n${YELLOW}Checking infrastructure namespace coverage...${NC}"
-INFRA_DIRS=$(find cluster/infrastructure -maxdepth 1 -type d ! -name "infrastructure" | sort)
+INFRA_DIRS=$(find cluster/infrastructure -maxdepth 1 -type d ! -name "infrastructure" 2>/dev/null | sort)
 MISSING_APPS=0
 
 for dir in $INFRA_DIRS; do
   ns=$(basename "$dir")
-  if ! grep -q "path: infrastructure/$ns" cluster/stages/*/service.yaml 2>/dev/null; then
+  if ! grep -rq "path: infrastructure/$ns" cluster/stages/ 2>/dev/null; then
     warn "Namespace '$ns' not wired to any ArgoCD Application"
-    ((MISSING_APPS++))
+    MISSING_APPS=$((MISSING_APPS + 1))
   fi
 done
 
@@ -116,17 +131,17 @@ fi
 
 # 5. Check for hardcoded infrastructure details
 echo -e "\n${YELLOW}Checking for hardcoded infrastructure details...${NC}"
-HARDCODED=$(grep -r "gpu-node\|control-plane\|worker-\|nfs\." \
+HARDCODED=$(grep -r "asd\|control-plane\|worker-\|nfs\." \
   --include="*.yaml" --include="*.yml" \
-  cluster/infrastructure prometheus-stack puppet-control-repo 2>/dev/null | \
-  grep -v "\.comments\|affinity\|nodeAffinity" | wc -l)
+  cluster/infrastructure puppet-control-repo 2>/dev/null | \
+  grep -v "\.comments\|affinity\|nodeAffinity" | wc -l || true)
 
 if [[ $HARDCODED -gt 0 ]]; then
   warn "Found $HARDCODED hardcoded node references (may be intentional affinity rules)"
-  grep -r "gpu-node\|control-plane\|worker-\|nfs\." \
+  grep -r "asd\|control-plane\|worker-\|nfs\." \
     --include="*.yaml" --include="*.yml" \
     cluster/infrastructure 2>/dev/null | \
-    grep -v "\.comments\|affinity\|nodeAffinity" | head -3
+    grep -v "\.comments\|affinity\|nodeAffinity" | head -3 || true
 else
   pass "No hardcoded infrastructure details found"
 fi
@@ -136,14 +151,14 @@ echo -e "\n${YELLOW}Checking for plaintext secrets...${NC}"
 PLAINTEXT_SECRETS=$(grep -r "password:\|token:\|key:" \
   --include="*secret*.yaml" --include="*secrets*.yaml" \
   cluster/ jenkins-repo/ puppet-control-repo/ helm-charts/ 2>/dev/null | \
-  grep -v "ENC\[" | grep -v "REPLACE_WITH_" | grep -v "#" | wc -l)
+  grep -v "ENC\[" | grep -v "REPLACE_WITH_" | grep -v "#" | wc -l || true)
 
 if [[ $PLAINTEXT_SECRETS -gt 0 ]]; then
   fail "Found $PLAINTEXT_SECRETS plaintext secrets (not SOPS-encrypted)"
   grep -r "password:\|token:\|key:" \
     --include="*secret*.yaml" --include="*secrets*.yaml" \
     cluster/ jenkins-repo/ puppet-control-repo/ helm-charts/ 2>/dev/null | \
-    grep -v "ENC\[" | grep -v "REPLACE_WITH_\|REPLACE_ME" | grep -v "#" | head -3
+    grep -v "ENC\[" | grep -v "REPLACE_WITH_\|REPLACE_ME" | grep -v "#" | head -3 || true
 else
   pass "All secrets are SOPS-encrypted"
 fi

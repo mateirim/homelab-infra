@@ -1,213 +1,64 @@
-# Helm Charts Reference
+# Helm Charts
 
-This document lists all **external** Helm charts deployed in the homelab-infra cluster with their repository URLs, versions, and source projects.
+All charts are deployed via ArgoCD Applications in `cluster/infrastructure/<namespace>/service.yaml`.
+License attribution: [docs/LICENSES.md](../../docs/LICENSES.md).
 
-**License & Attribution:** See [docs/LICENSES.md](../../docs/LICENSES.md) for full license information and attribution for all third-party projects.
+## External Charts
 
-For **custom/local** charts, see [helm-charts/charts/](../../helm-charts/charts/).
+| Chart | Version | Repo |
+| --- | --- | --- |
+| cilium | ^1.15.0 | `https://helm.cilium.io/` |
+| ingress-nginx | ^4.7.1 | `https://kubernetes.github.io/ingress-nginx` |
+| cert-manager | ^1.13.0 | `https://charts.jetstack.io` |
+| keda | ^2.16.0 | `https://kedacore.github.io/charts` |
+| nfs-subdir-external-provisioner | ^4.0.18 | `https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner` |
+| prometheus-stack | ^25.0.0 | `https://prometheus-community.github.io/helm-charts` |
+| grafana | ^6.59.4 | `https://grafana.github.io/helm-charts` |
+| loki-stack | ^2.9.11 | `https://grafana.github.io/helm-charts` |
+| mimir-distributed | ^5.0.0 | `https://grafana.github.io/helm-charts` |
+| redis-ha | ^4.1.0 | `https://dandydeveloper.github.io/charts` |
+| community-operator | ^0.8.3 | `https://mongodb.github.io/helm-charts` |
+| keycloak | ^19.3.3 | `https://charts.bitnami.com/bitnami` |
+| open-webui | ^3.1.9 | `https://helm.openwebui.com/` |
+| ollama | ^1.36.0 | `https://helm.otwld.com/` |
+| litellm-helm | ^0.1.2 | `oci://docker.litellm.ai/berriai/litellm-helm` |
+| openclaw | ^1.3.0 | `https://serhanekicii.github.io/openclaw-helm` |
+| searxng | ^1.0.7 | `https://charts.kubito.dev` |
+| n8n | ^2.0.1 | `oci://8gears.container-registry.com/library/n8n` |
+| whisper | ^1.0.0 | `https://andrenarchy.github.io/helm-charts/` |
+| wyoming-piper | 0.1.3 | `https://gitlab.com/api/v4/projects/62293226/packages/helm/stable` |
+| home-assistant | ^1.34.0 | `https://charts.pree.dev` |
+| music-assistant-server | ^0.1.9 | `https://lmatfy.github.io/charts` |
+| jenkins | ^4.0.0 | `https://charts.jenkins.io` |
+| argocd | ^6.0.0 | `https://argoproj.github.io/argo-helm` |
+| puppetserver | ^9.2.0 | `https://puppetlabs.github.io/puppetserver-helm-chart` |
+| actions-runner-controller | ^0.23.7 | `https://actions-runner-controller.github.io/actions-runner-controller` |
+| metrics-server | 6.5.5 | `https://charts.bitnami.com/bitnami` |
+| nvidia-device-plugin | ^0.14.0 | `https://nvidia.github.io/k8s-device-plugin` |
 
-## External Chart Repositories
+## Custom Charts & Images
 
-### Core Infrastructure
+Custom Helm charts live in [`helm-charts/charts/`](../../helm-charts/charts/).
+Their Docker images are built from [`helm-charts/containers/`](../../helm-charts/containers/) and pushed to the **in-cluster registry** (`registry.yourdomain.com`).
 
-- **cilium** (^1.15.0)
-  - Helm Repo: https://helm.cilium.io/
-  - Source: [Cilium](https://github.com/cilium/cilium) (Apache 2.0)
+| Chart | Dockerfile | Image | Description |
+| --- | --- | --- | --- |
+| foreman | `containers/foreman/` | `registry.yourdomain.com/foreman` | Puppet reporting + analytics |
 
-- **ingress-nginx** (^4.7.1)
-  - Helm Repo: https://kubernetes.github.io/ingress-nginx
-  - Source: [NGINX Ingress](https://github.com/kubernetes/ingress-nginx) (Apache 2.0)
+Other available Dockerfiles (no chart, used directly): `puppetserver`, `actions-runner`, `promtail-syslog`, `r10k`.
 
-### Databases & Storage
+### Pushing Images
 
-- **redis-ha** (^14.3.3)
-  - Helm Repo: https://charts.bitnami.com/bitnami
-  - Source: [Bitnami Charts](https://github.com/bitnami/charts) (Apache 2.0)
+The registry must be running (stage-2) before pushing.
 
-### Security & TLS
+```bash
+docker build -t registry.REPLACE_WITH_YOUR_DOMAIN/<image>:<tag> helm-charts/containers/<image>/
+docker push registry.REPLACE_WITH_YOUR_DOMAIN/<image>:<tag>
+```
 
-- **cert-manager** (^v1.13+)
-  - Helm Repo: https://charts.jetstack.io
-  - Source: [cert-manager](https://github.com/cert-manager/cert-manager) (Apache 2.0)
+## Adding a New Chart
 
-### Monitoring & Observability
-
-- **prometheus** (^25+)
-  - Helm Repo: https://prometheus-community.github.io/helm-charts
-  - Source: [Prometheus Community](https://github.com/prometheus-community/helm-charts) (Apache 2.0)
-
-- **grafana** (^7.0+)
-  - Helm Repo: https://grafana.github.io/helm-charts
-  - Source: [Grafana](https://github.com/grafana/helm-charts) (AGPL 3.0)
-  - ⚠️ Note: AGPL 3.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance info
-
-- **loki** (^6.0+)
-  - Helm Repo: https://grafana.github.io/helm-charts
-  - Source: [Loki](https://github.com/grafana/loki) (AGPL 3.0)
-  - ⚠️ Note: AGPL 3.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance info
-
-- **mimir** (^5.0+)
-  - Helm Repo: https://grafana.github.io/helm-charts
-  - Source: [Mimir](https://github.com/grafana/mimir) (AGPL 3.0)
-  - ⚠️ Note: AGPL 3.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance info
-
-- **alertmanager** (^1.0+)
-  - Helm Repo: https://prometheus-community.github.io/helm-charts
-  - Source: [Prometheus Community](https://github.com/prometheus-community/helm-charts) (Apache 2.0)
-
-### AI/LLM Stack
-
-- **open-webui** (^3.1.9)
-  - Helm Repo: https://helm.openwebui.com/
-  - Source: [Open WebUI](https://github.com/open-webui/open-webui) (MIT)
-
-- **ollama** (^1.36)
-  - Helm Repo: https://helm.otwld.com/
-  - Source: [Ollama](https://github.com/ollama/ollama) (MIT)
-
-- **wyoming-piper** (^0.1.3)
-  - Helm Repo: https://gitlab.com/api/v4/projects/62293226/packages/helm/stable
-  - Source: [Piper](https://github.com/rhasspy/piper) (MIT)
-  - ⚠️ Note: GitLab project 62293226 may be unavailable. If deployment fails, check [School-Guy/HelmCharts](https://github.com/School-Guy/HelmCharts) for alternatives or use the Whisper chart instead.
-
-- **whisper** (^1.0.0)
-  - Helm Repo: https://andrenarchy.github.io/helm-charts/
-  - Source: [OpenAI Whisper](https://github.com/openai/whisper) (MIT)
-
-- **searxng** (^1.0.7)
-  - Helm Repo: https://charts.kubito.dev
-  - Source: [SearXNG](https://github.com/searxng/searxng) (AGPL 3.0)
-  - ⚠️ Note: AGPL 3.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance info
-
-- **n8n** (^2.0.1)
-  - Helm Repo: oci://8gears.container-registry.com/library/n8n
-  - Source: [n8n](https://github.com/n8n-io/n8n) (Elastic License 2.0)
-  - ⚠️ Note: Elastic License 2.0 - See [docs/LICENSES.md](../../docs/LICENSES.md) for usage terms
-
-- **litellm-helm** (^0.1.2)
-  - Helm Repo: oci://docker.litellm.ai/berriai/litellm-helm
-  - Source: [LiteLLM](https://github.com/BerriAI/litellm) (MIT)
-
-- **openclaw** (^1.3.0)
-  - Helm Repo: https://serhanekicii.github.io/openclaw-helm
-  - Source: [OpenClaw](https://github.com/serhanekicii/openclaw) (MIT)
-
-### Home Automation
-
-- **home-assistant** (^1.34.0)
-  - Helm Repo: https://charts.pree.dev
-  - Source: [Home Assistant](https://github.com/home-assistant/core) (Apache 2.0)
-
-- **music-assistant-server** (^0.1.9)
-  - Helm Repo: https://lmatfy.github.io/charts
-  - Source: [Music Assistant](https://github.com/music-assistant/music-assistant) (MIT)
-
-### Identity & Access
-
-- **keycloak** (^21.0+)
-  - Helm Repo: https://codecentric.github.io/helm-charts
-  - Source: [Keycloak](https://github.com/keycloak/keycloak) (Apache 2.0)
-
-### VPN & Networking
-
-- **tailscale** (^1.0+)
-  - Helm Repo: https://pkgs.tailscale.com/tailscale-helm/
-  - Source: [Tailscale](https://github.com/tailscale/tailscale) (BSD)
-
-### CI/CD & Automation
-
-- **jenkins** (^4.0+)
-  - Helm Repo: https://charts.jenkins.io
-  - Source: [Jenkins](https://github.com/jenkinsci/jenkins) (MIT)
-
-- **argocd** (^6.0+)
-  - Helm Repo: https://argoproj.github.io/argo-helm
-  - Source: [ArgoCD](https://github.com/argoproj/argo-cd) (Apache 2.0)
-
-### Autoscaling
-
-- **keda** (^2.13+)
-  - Helm Repo: https://kedacore.github.io/charts
-  - Source: [KEDA](https://github.com/kedacore/keda) (Apache 2.0)
-
-### GPU Support (Optional)
-
-- **nvidia-device-plugin** (^0.14+)
-  - Helm Repo: https://nvidia.github.io/k8s-device-plugin
-  - Source: [NVIDIA Device Plugin](https://github.com/NVIDIA/k8s-device-plugin) (Apache 2.0)
-
----
-
-## Custom/Local Charts
-
-Custom charts are maintained in [`helm-charts/charts/`](../../helm-charts/charts/). These are built and deployed from this repository:
-
-- **foreman** — Puppet reporting + analytics
-  - Location: [helm-charts/charts/foreman/](../../helm-charts/charts/foreman/)
-  - Based on [Foreman](https://github.com/theforeman/foreman) (GPL 3.0)
-  - Docker image: [lu1as/docker-foreman](https://github.com/lu1as/docker-foreman)
-  - License: GPL 3.0 (See [docs/LICENSES.md](../../docs/LICENSES.md) for compliance details)
-
----
-
-## Installation Reference
-
-Most charts are installed via **ArgoCD Applications** in the `cluster/infrastructure/` directory. Each namespace (e.g., `llm/`, `homeassistant/`, `database/`) contains a `service.yaml` file that defines the Helm sources and chart versions.
-
-### Example: LLM Stack
-See [cluster/infrastructure/llm/service.yaml](../infrastructure/llm/service.yaml) for the complete LLM application definition.
-
-### Example: Home Assistant
-See [cluster/infrastructure/homeassistant/service.yaml](../infrastructure/homeassistant/service.yaml) for the Home Assistant application definition.
-
----
-
-## Adding New Charts
-
-To add a new **external** chart:
-
-1. **Find the chart repository**: `helm search repo <chart-name>`
-2. **Check the license** in the chart's source project
-3. **Add to the appropriate namespace's `service.yaml`**:
-   ```yaml
-   - chart: <chart-name>
-     targetRevision: '<version>'
-     repoURL: https://example.com/charts
-     helm:
-       releaseName: <release-name>
-       valueFiles:
-         - $myRepo/infrastructure/<namespace>/<chart-name>-values.yaml
-   ```
-4. **Update [docs/LICENSES.md](../../docs/LICENSES.md)** with the source project, license, and GitHub link
-5. **Update this file** with the new chart information
-6. **Commit and push**: ArgoCD will auto-sync
-
-To create a **custom** chart:
-
-1. Create directory: `helm-charts/charts/<chart-name>/`
-2. Follow standard Helm chart structure (`Chart.yaml`, `values.yaml`, `templates/`)
-3. Include `LICENSE` file in the chart directory
-4. Reference it in the appropriate namespace's `service.yaml` with `repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra`
-5. Update [docs/LICENSES.md](../../docs/LICENSES.md) with the chart details
-6. See [foreman chart](../../helm-charts/charts/foreman/) for an example
-
----
-
-## License Compliance
-
-- **AGPL 3.0 Components**: Grafana, Loki, Mimir, SearXNG require source code availability if modified
-- **Elastic License 2.0**: n8n has usage restrictions - see [docs/LICENSES.md](../../docs/LICENSES.md)
-- **GPL 3.0**: Foreman and Puppet - see [docs/LICENSES.md](../../docs/LICENSES.md)
-- **Open Source**: All other components use permissive open-source licenses (MIT, Apache 2.0, BSD)
-
-For complete details, see [docs/LICENSES.md](../../docs/LICENSES.md).
-
----
-
-## Notes
-
-- **Private Registries**: OCI-based charts (like `litellm` and `n8n`) may require authentication
-- **Version Pinning**: Always use caret (`^`) or tilde (`~`) versioning for stability
-- **Custom Charts**: Charts in `helm-charts/charts/` are deployed from the git repo itself
-- **Chart Updates**: Keep chart repos updated with `helm repo update`
-- **License Compliance**: Review [docs/LICENSES.md](../../docs/LICENSES.md) before commercial deployment
+1. Add a source block to `cluster/infrastructure/<namespace>/service.yaml`
+2. Add a values file `cluster/infrastructure/<namespace>/<chart>-values.yaml`
+3. Update [docs/LICENSES.md](../../docs/LICENSES.md) with license info
+4. `git push` — ArgoCD auto-syncs
