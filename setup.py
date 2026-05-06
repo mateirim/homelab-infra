@@ -101,6 +101,7 @@ def _is_encrypted(path: Path) -> bool:
 def replace_in_files(old: str, new: str, root: Path = Path(".")):
     if not old or old == new:
         return
+    changed_files = []
     for path in root.rglob("*"):
         if not path.is_file():
             continue
@@ -114,8 +115,15 @@ def replace_in_files(old: str, new: str, root: Path = Path(".")):
             text = path.read_text()
             if old in text:
                 path.write_text(text.replace(old, new))
+                changed_files.append(path)
         except OSError:
             pass
+    if changed_files:
+        display_old = old if len(old) <= 40 else old[:37] + "..."
+        display_new = new if len(new) <= 40 else new[:37] + "..."
+        print(f"  {RED}- {display_old}{NC}  →  {GREEN}+ {display_new}{NC}")
+        for path in changed_files:
+            print(f"      {path}")
 
 def strip_node_pin(name: str, root: Path = Path(".")):
     """Remove nodeSelector / matchExpression lines referencing a placeholder hostname."""
@@ -138,15 +146,16 @@ def write_and_encrypt(rel_path: str, content: str, gpg_key: str):
     path = Path(rel_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
+    print(f"  {RED}- plaintext{NC}  →  {GREEN}+ ENC[AES256_GCM,...]{NC}")
+    print(f"      {rel_path}")
     result = subprocess.run(
         ["sops", "--encrypt", "--in-place", "--pgp", gpg_key, str(path)],
         capture_output=True, text=True,
     )
     if result.returncode != 0:
-        print(f"{RED}  ✗ {rel_path}{NC}")
-        print(f"    {result.stderr.strip()}")
+        print(f"    {RED}✗ encryption failed:{NC} {result.stderr.strip()}")
     else:
-        print(f"  {GREEN}✓{NC} {rel_path}")
+        print(f"    {GREEN}✓ encrypted{NC}")
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
