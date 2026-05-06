@@ -16,7 +16,7 @@ spec:
       selfHeal: true
   source:
     chart: metrics-server
-    # version number from: helm search repo grafana
+    # version number from: helm search repo metrics-server
     targetRevision: '6.5.5'
     repoURL: https://charts.bitnami.com/bitnami
     helm:

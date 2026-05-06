@@ -18,7 +18,7 @@ spec:
     repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
     ref: myRepo
   - chart: nfs-subdir-external-provisioner
-    # version number from: helm search repo grafana
+    # version number from: helm search repo nfs
     targetRevision: '^4.0.18'
     repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
     helm:
@@ -26,7 +26,7 @@ spec:
       valueFiles:
         - $myRepo/infrastructure/nfs/nfs-values.yaml
   - chart: nfs-subdir-external-provisioner
-    # version number from: helm search repo grafana
+    # version number from: helm search repo nfs
     targetRevision: '^4.0.18'
     repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
     helm:

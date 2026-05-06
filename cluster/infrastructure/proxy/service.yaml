@@ -19,7 +19,7 @@ spec:
     repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
     ref: myRepo
   - chart: ingress-nginx
-    # version number from: helm search repo grafana
+    # version number from: helm search repo ingress-nginx
     targetRevision: '^4.7.1'
     repoURL: https://kubernetes.github.io/ingress-nginx
     helm:

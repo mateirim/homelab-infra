@@ -19,7 +19,7 @@ spec:
     repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
     ref: myRepo
   - chart: actions-runner-controller
-    # version number from: helm search repo grafana
+    # version number from: helm search repo actions-runner-controller
     targetRevision: '^0.23.7'
     repoURL: https://actions-runner-controller.github.io/actions-runner-controller
     helm:

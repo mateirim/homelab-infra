@@ -13,14 +13,15 @@ spec:
   claimRef:
     name: open-webui-ollama
     namespace: llm
-  hostPath:
-    path: "/nfs/data/llm/webui"
-  # mountOptions:
-  #   - hard
-  #   - nfsvers=4.1
-  # nfs:
-  #   path: /nfs/kube/llm
-  #   server: REPLACE_WITH_NFS_SERVER_2
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+    - intr
+    - timeo=600
+    - retrans=2
+  nfs:
+    path: /nfs/kube/llm
+    server: REPLACE_WITH_NFS_SERVER_2
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

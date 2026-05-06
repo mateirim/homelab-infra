@@ -92,7 +92,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: popllama-pv
+  name: hallama-pv
   namespace: homeassistant
 spec:
   storageClassName: "nfs-omv"
@@ -102,13 +102,14 @@ spec:
     storage: 5Ti
   volumeMode: Filesystem
   claimRef:
-    name: ollama
+    name: hallama
     namespace: homeassistant
-  hostPath:
-    path: "/nfs/data/llm/webui"
-  # mountOptions:
-  #   - hard
-  #   - nfsvers=4.1
-  # nfs:
-  #   path: /nfs/kube/llm
-  #   server: REPLACE_WITH_NFS_SERVER_2
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+    - intr
+    - timeo=600
+    - retrans=2
+  nfs:
+    path: /nfs/kube/llm-homeassistant
+    server: REPLACE_WITH_NFS_SERVER_2

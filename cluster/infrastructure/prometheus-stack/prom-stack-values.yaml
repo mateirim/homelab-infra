@@ -22,22 +22,19 @@ prometheus:
     #       operator: Exists
     # serviceMonitorNamespaceSelector: {}
     additionalScrapeConfigs: |
-      - job_name: "Z790"
+      - job_name: "external-windows-hwinfo"
         static_configs:
         - targets: ["REPLACE_WITH_WINDOWS_NODE_IP:9182"]
-      - job_name: "GPU"
+      - job_name: "external-windows-gpu"
         static_configs:
         - targets: ["REPLACE_WITH_WINDOWS_NODE_IP:9835"]
-      - job_name: "Gateway"
+      - job_name: "prometheus-pushgateway"
         static_configs:
         - targets: ["prometheus-pushgateway.prometheus.svc.cluster.local:9091"]
       - job_name: "dcgm-exporter"
         static_configs:
         - targets: ["dcgm-exporter.prometheus.svc.cluster.local:9400"]
-      - job_name: "Node"
-        static_configs:
-        - targets: ["prometheus-stack-prometheus-node-exporter.prometheus.svc.cluster.local:9100"]
-      - job_name: 'kubernetes-pods'
+      - job_name: "kubernetes-pods"
         kubernetes_sd_configs:
         - role: pod
         relabel_configs:
@@ -55,7 +52,7 @@ prometheus:
     remoteWrite:
     - url: http://mimir-gateway.mimir.svc.cluster.local:80/api/v1/push
       headers:
-        X-Scope-OrgID: test
+        X-Scope-OrgID: homelab
     securityContext:
       runAsNonRoot: true
       runAsUser: 2000

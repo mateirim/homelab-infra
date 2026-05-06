@@ -19,7 +19,7 @@ spec:
     repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
     ref: myRepo
   - chart: puppetserver
-    # version number from: helm search repo grafana
+    # version number from: helm search repo puppet
     targetRevision: '^9.2.0'
     repoURL: https://puppetlabs.github.io/puppetserver-helm-chart
     helm:

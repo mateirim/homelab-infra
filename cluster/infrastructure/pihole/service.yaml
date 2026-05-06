@@ -19,7 +19,7 @@ spec:
     repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
     ref: myRepo
   - chart: pihole
-    # version number from: helm search repo grafana
+    # version number from: helm search repo pihole
     targetRevision: '^2.19.0'
     repoURL: https://mojo2600.github.io/pihole-kubernetes
     helm:

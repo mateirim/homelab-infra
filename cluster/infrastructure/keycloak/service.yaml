@@ -19,7 +19,7 @@ spec:
     repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab-infra
     ref: myRepo
   - chart: keycloak
-    # version number from: helm search repo grafana
+    # version number from: helm search repo keycloak
     targetRevision: '^19.3.3'
     repoURL: https://charts.bitnami.com/bitnami
     helm:

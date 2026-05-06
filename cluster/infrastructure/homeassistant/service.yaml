@@ -38,6 +38,6 @@ spec:
     targetRevision: '^1.36'
     repoURL: https://helm.otwld.com/
     helm:
-      releaseName: ollama
+      releaseName: hallama
       valueFiles:
         - $myRepo/infrastructure/homeassistant/ollama-values.yaml
